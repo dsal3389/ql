@@ -1,6 +1,15 @@
-# ql
-graphql library for python to create graphql queries with python pydantic objects
+# ql (in development)
+Graphql client library, wrapped around pydantic classes for typing validation,
+provide simple, safe and dynamic way to query data from a graphql api.
 
+
+using pydantic for creating python objects from rest api is common, it is easy and 
+it has type validation, so why not do that also for graphql apis?
+
+
+
+## Query examples
+#### simple query
 > ```py
 > import ql
 > from pydantic import BaseModel
@@ -14,8 +23,8 @@ graphql library for python to create graphql queries with python pydantic object
 > 
 > q = ql.query(
 >   (Point, (
->     q._(Point).x,
->     q._(Point).y
+>     ql._(Point).x,
+>     ql._(Point).y
 >   ))
 > )
 > print(q)
@@ -25,7 +34,7 @@ graphql library for python to create graphql queries with python pydantic object
 > query{Point{x,y}}
 > ```
 
-## different query names then what defined
+#### different query names then what defined
 > ```py
 > import ql
 > from pydantic import BaseModel, Field
@@ -43,7 +52,7 @@ graphql library for python to create graphql queries with python pydantic object
 > query{Person{first_name}}
 > ```
 
-## smart implements
+#### smart implements + nested query + inline fragment
 > ```py
 > import ql
 > from pydantic import BaseModel
@@ -55,15 +64,25 @@ graphql library for python to create graphql queries with python pydantic object
 >
 > @ql.model
 > class Female(Human):
->   pass
+>   pregnant: bool
 >
 > @ql.model
 > class Male(Human):
->   passs
+>   pass
 >
 > print(ql.implements(Human))  # what does `Human` implement
+> q = ql.query(
+>     (Human, (
+>         ql._(Human).first_name,
+>         (ql.on(Female), (
+>             ql._(Female).pregnant,
+>         ))
+>     ))
+> )
+> print(q)
 > ```
 > ---
 > ```
 > frozenset({<class '__main__.Human'>})
+> query{Human{first_name,...on Female{pregnant,__typename},__typename}}
 > ```
