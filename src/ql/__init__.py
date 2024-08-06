@@ -2,6 +2,7 @@ __all__ = [
     "model",
     "query_fields_nt",
     "mutate_fields_nt",
+    "implements",
     "query",
     "arguments",
     "metadata",
@@ -10,6 +11,7 @@ __all__ = [
 
 from .model import (
     model,
+    implements,
     query_fields_nt,
     mutate_fields_nt,
 )
