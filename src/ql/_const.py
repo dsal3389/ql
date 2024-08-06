@@ -3,6 +3,7 @@
 # and mutating the model
 QL_QUERY_NAME_ATTR = "__ql_query_name__"
 QL_MUTATE_NAME_ATTR = "__ql_mutate_name__"
+QL_TYPENAME_ATTR = "__ql_typename__"
 
 # represent the model implementions
 QL_IMPLEMENTS_ATTR = "__ql_implements__"

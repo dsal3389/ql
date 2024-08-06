@@ -5,6 +5,7 @@ __all__ = [
     "implements",
     "query",
     "arguments",
+    "on",
     "metadata",
     "_",
 ]
@@ -15,7 +16,7 @@ from .model import (
     query_fields_nt,
     mutate_fields_nt,
 )
-from .query import query, arguments
+from .query import query, arguments, on
 from .typing import metadata
 
 from functools import wraps

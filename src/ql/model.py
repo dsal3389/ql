@@ -8,6 +8,7 @@ from ._const import (
     QL_IMPLEMENTS_ATTR,
     QL_QUERYABLE_FIELDS_NT_ATTR,
     QL_MUTABLE_FIELDS_NT_ATTR,
+    QL_TYPENAME_ATTR,
 )
 from .typing import QLFieldMetadata
 
@@ -45,12 +46,13 @@ def _process_model(
             f"given class `{cls.__name__}` does not inherits from `pydantic.BaseModel`"
         )
 
+    typename = typename or cls.__name__
+
     # set minimum required attributes
     setattr(cls, QL_QUERY_NAME_ATTR, query_name or cls.__name__)
     setattr(cls, QL_MUTATE_NAME_ATTR, mutate_name or cls.__name__)
+    setattr(cls, QL_TYPENAME_ATTR, typename)
     setattr(cls, QL_IMPLEMENTS_ATTR, {})
-
-    typename = typename or cls.__name__
 
     for mro in cls.__mro__:
         # if mro is not a `BaseModel` and it doesn't have `QL_IMPLEMENTS_ATTR`
