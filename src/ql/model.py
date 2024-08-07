@@ -83,15 +83,15 @@ def _process_model(
     setattr(cls, QL_IMPLEMENTS_ATTR, {})
     setattr(cls, QL_INSTANTIATE, classmethod(_instantiate_model))
 
-    for mro in cls.__mro__:
+    for mro in cls.__mro__[1:]:
         # if mro is not a `BaseModel` and it doesn't have `QL_IMPLEMENTS_ATTR`
         # then its not a graphql model
-        if not issubclass(mro, BaseModel) or not hasattr(cls, QL_IMPLEMENTS_ATTR):
+        if not issubclass(mro, BaseModel) or not hasattr(mro, QL_IMPLEMENTS_ATTR):
             continue
 
         # add current class to parent
         # classes because they implement the current one
-        __implements__ = getattr(cls, QL_IMPLEMENTS_ATTR)
+        __implements__ = getattr(mro, QL_IMPLEMENTS_ATTR)
         __implements__[typename] = cls
 
     queryable_fields: list[tuple[str, str]] = []
