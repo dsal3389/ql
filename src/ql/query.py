@@ -56,10 +56,10 @@ class _QuerySerializer:
     ) -> None:
         self._query = query_models
         self._include_typename = include_typename
-        self._involved_models = set()
+        self._involved_models: set[type[BaseModel]] = set()
 
     @property
-    def involved_models(self) -> tuple[type[BaseModel]]:
+    def involved_models(self) -> tuple[type[BaseModel], ...]:
         """
         should be called only after calling `serialize`, this property returns all found models in query
         """

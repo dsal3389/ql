@@ -14,12 +14,12 @@ from ._const import (
 from .typing import QLFieldMetadata
 
 
-_ALL_REGISTERD_MODELS = []
+_ALL_REGISTERD_MODELS: dict[str, type[BaseModel]] = {}
 
 
-def all_models() -> tuple[type[BaseModel]]:
+def all_models() -> dict[str, type[BaseModel]]:
     """returns a tuple of all registered models"""
-    return tuple(_ALL_REGISTERD_MODELS)
+    return _ALL_REGISTERD_MODELS.copy()
 
 
 def implements(cls: type[BaseModel]) -> tuple:
@@ -116,9 +116,10 @@ def _process_model(
             mutable_fields.append((name, ql_field_metadata.mutate_name or name))
 
     # namedtuples that map between the field name to the field `query_name`/`mutate_name`
-    # it is a namedtuple, so it will be dot access
-    QueryFields = namedtuple("QueryFields", (qf[0] for qf in queryable_fields))
-    MutateFields = namedtuple("MutateFields", (mf[0] for mf in mutable_fields))
+    # it is a namedtuple, so it will be dot access, type ignore because `mypy`
+    # doesn't support namedtuples with dynamic fields
+    QueryFields = namedtuple("QueryFields", (qf[0] for qf in queryable_fields))  # type: ignore
+    MutateFields = namedtuple("MutateFields", (mf[0] for mf in mutable_fields))  # type: ignore
 
     setattr(
         cls,
@@ -132,7 +133,7 @@ def _process_model(
     )
 
     # register the model to the list
-    _ALL_REGISTERD_MODELS.append(cls)
+    _ALL_REGISTERD_MODELS[typename] = cls
     return cls
 
 
