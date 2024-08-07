@@ -8,6 +8,8 @@ QL_TYPENAME_ATTR = "__ql_typename__"
 # represent the model implementions
 QL_IMPLEMENTS_ATTR = "__ql_implements__"
 
+QL_INSTANTIATE = "__ql_instantiate__"
+
 # returns namedtuple for accessing
 # model fields with dot
 QL_MUTABLE_FIELDS_NT_ATTR = "__ql_mutate_fields_nt__"

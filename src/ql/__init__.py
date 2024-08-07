@@ -1,5 +1,6 @@
 __all__ = [
     "model",
+    "all_models",
     "query_fields_nt",
     "mutate_fields_nt",
     "implements",
@@ -15,6 +16,7 @@ __all__ = [
 from .http import http
 from .model import (
     model,
+    all_models,
     implements,
     query_fields_nt,
     mutate_fields_nt,

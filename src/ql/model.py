@@ -9,14 +9,23 @@ from ._const import (
     QL_QUERYABLE_FIELDS_NT_ATTR,
     QL_MUTABLE_FIELDS_NT_ATTR,
     QL_TYPENAME_ATTR,
+    QL_INSTANTIATE,
 )
 from .typing import QLFieldMetadata
 
 
-def implements(cls: type[BaseModel]) -> frozenset:
+_ALL_REGISTERD_MODELS = []
+
+
+def all_models() -> tuple[type[BaseModel]]:
+    """returns a tuple of all registered models"""
+    return tuple(_ALL_REGISTERD_MODELS)
+
+
+def implements(cls: type[BaseModel]) -> tuple:
     """returns the model implemention list"""
     implements = getattr(cls, QL_IMPLEMENTS_ATTR, {})
-    return frozenset(implements.values())
+    return tuple(implements.values())
 
 
 def query_fields_nt(cls: type[BaseModel]) -> Any:
@@ -33,6 +42,25 @@ def mutate_fields_nt(cls: type[BaseModel]) -> Any:
     mutate name value
     """
     return getattr(cls, QL_MUTABLE_FIELDS_NT_ATTR)
+
+
+def _instantiate_model(
+    cls: type[BaseModel], query_response: dict[Any, Any]
+) -> BaseModel:
+    typename = getattr(cls, QL_TYPENAME_ATTR, None)
+
+    if typename is not None and typename != query_response.get("__typename"):
+        implements = getattr(cls, QL_IMPLEMENTS_ATTR)
+
+        # if the typename matches any typename
+        # that this class implements, we need to create an instance
+        # of the child class
+        if typename in implements:
+            instanciate_child_model = getattr(implements[typename], QL_INSTANTIATE)
+            return instanciate_child_model(query_response)
+
+    queryable_fields = query_fields_nt(cls)
+    return cls(**query_response)
 
 
 def _process_model(
@@ -53,6 +81,7 @@ def _process_model(
     setattr(cls, QL_MUTATE_NAME_ATTR, mutate_name or cls.__name__)
     setattr(cls, QL_TYPENAME_ATTR, typename)
     setattr(cls, QL_IMPLEMENTS_ATTR, {})
+    setattr(cls, QL_INSTANTIATE, classmethod(_instantiate_model))
 
     for mro in cls.__mro__:
         # if mro is not a `BaseModel` and it doesn't have `QL_IMPLEMENTS_ATTR`
@@ -101,6 +130,9 @@ def _process_model(
         QL_MUTABLE_FIELDS_NT_ATTR,
         MutateFields(*(mf[1] for mf in mutable_fields)),
     )
+
+    # register the model to the list
+    _ALL_REGISTERD_MODELS.append(cls)
     return cls
 
 
