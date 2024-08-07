@@ -1,15 +1,33 @@
 [tool.poetry]
-name = "ql"
+name = "graph-ql"
 version = "0.1.0"
-description = ""
+repository = "https://github.com/dsal3389/ql"
+description = "non intrusive python graphql client library wrapped around pydantic"
 authors = ["daniel sonbolian <dsal3389@gmail.com>"]
+keywords = ["graphql", "pydantic", "library"]
 readme = "README.md"
+packages = [{include="src/ql"}]
+classifiers = [
+  "Framework :: Pydantic :: 2",
+  "Topic :: Software Development",
+  "Topic :: Software Development :: Libraries",
+  "Typing :: Typed"
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
 pydantic = "^2.8.2"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [
+  "--import-mode=importlib"
+]

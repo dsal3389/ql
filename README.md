@@ -6,10 +6,7 @@ provide simple, safe and dynamic way to query data from a graphql api.
 using pydantic for creating python objects from rest api is common, it is easy and 
 it has type validation, so why not do that also for graphql apis?
 
-features:
-  * python objects to valid graphql string
-  * http send and recv information
-  * scalar http responses
+
 
 ## Query examples
 #### simple query
@@ -88,53 +85,4 @@ features:
 > ```
 > frozenset({<class '__main__.Human'>})
 > query{Human{first_name,...on Female{pregnant,__typename},__typename}}
-> ```
-
-#### query with http
-> ```py
-> import ql
-> import requests
-> from pydantic import BaseModel
->
-> ql.http.set_request_func(lambda q: requests.get(...).json())
->
-> # define models ...
->
-> response = ql.query_response(
->   (Point, (
->      ql._(Point).x,
->      ql._(Point).y
->   ))
-> )
-> print(response)
-> ```
-> ---
-> ```
-> {"data": {"point": "x": 50, "y": -50}}
-> ```
-
-#### query and scalar response
-> ```py
-> import ql
-> import requests
-> from pydantic import BaseModel
->
-> ql.http.set_request_func(lambda q: requests.get(...).json())
->
-> @ql.model
-> class Point(BaseModel):
->   x: int
->   y: int
->
-> scalared = ql.query_response_scalar(
->  (Point, (
->    ql._(Point).x,
->    ql._(Point).y
->   ))
-> )
-> print(scalared)
-> ```
-> ---
-> ```
-> {"point": Point(x=50, y=-50)}
 > ```
