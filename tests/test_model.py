@@ -1,11 +1,11 @@
 import ql
-from tests.models import Human, Male, Female
+from tests.models import Human, Male, Female, Child
 
 
 def test_implments() -> None:
-    assert Male in ql.implements(
-        Human
-    ), "model `Human` implements model `Male`, but couldn't find it"
-    assert Female in ql.implements(
-        Human
-    ), "model `Human` implements model `Female` but couldn't find it"
+    implemented_models = (Male, Female, Child)
+
+    for implemented_model in implemented_models:
+        assert (
+            implemented_model in ql.implements(Human)
+        ), f"model `Human` implements `{implemented_model.__name__}` but couldn't find it in the implements list of `Human`"

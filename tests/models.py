@@ -23,3 +23,14 @@ class Male(Human):
 @ql.model
 class Female(Human):
     pregnant: bool
+
+
+@ql.model
+class Child(Human):
+    playing: bool
+
+
+@ql.model(query_name="family")
+class Family(BaseModel):
+    people: list[Male | Female | Child]
+    count: int

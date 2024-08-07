@@ -106,7 +106,7 @@ class _QuerySerializer:
 
             if isinstance(field, str):
                 yield field
-            elif isinstance(field, tuple):
+            elif isinstance(field, (tuple, list, set)):
                 yield from self._serialize_model_query(field)
             elif isinstance(field, _QueryOperation):
                 if field.op not in _ALLOWED_FIELD_OPERATIONS:
