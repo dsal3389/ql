@@ -6,6 +6,7 @@ from typing import Generator, TypeAlias, Any
 from pydantic import BaseModel
 
 from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
+from .http import http
 
 
 class _QueryOperationType(enum.Enum):
@@ -23,6 +24,8 @@ _ALLOWED_FIELD_OPERATIONS = (_QueryOperationType.REFERENCE_FRAGMENT,)
 
 
 class _QueryOperation:
+    __slots__ = ("op", "model", "extra")
+
     def __init__(
         self,
         op: _QueryOperationType,
@@ -45,6 +48,8 @@ _QueryModelType: TypeAlias = tuple[
 
 
 class _QuerySerializer:
+    __slots__ = ("_query", "_include_typename")
+
     def __init__(
         self, query_models: tuple[_QueryModelType, ...], include_typename: bool
     ) -> None:
@@ -153,3 +158,26 @@ def query(*query_models: _QueryModelType, include_typename: bool = True) -> str:
     returns string version of requester query
     """
     return _QuerySerializer(query_models, include_typename).serialize()
+
+
+def query_response(
+    *query_models: _QueryModelType, include_typename: bool = True
+) -> dict[Any, Any]:
+    """
+    converts given query model to string and preform an http request,
+    returns the http response
+
+    response = ql.query_response(
+        (Point, (
+            ql._(Point).x,
+            ql._(Point).y
+        ))
+    )
+
+    --response--
+    {"data": "point": {"x": 50, "y": -50}}
+    """
+    query_string = _QuerySerializer(
+        query_models, include_typename=include_typename
+    ).serialize()
+    return http.request(query_string)
