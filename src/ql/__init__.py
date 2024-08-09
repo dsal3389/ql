@@ -1,11 +1,14 @@
 __all__ = [
     "model",
     "all_models",
+    "instantiate_model",
     "query_fields_nt",
     "mutate_fields_nt",
     "implements",
+    "typename",
     "query",
     "query_response",
+    "query_response_scalar",
     "arguments",
     "on",
     "http",
@@ -18,10 +21,12 @@ from .model import (
     model,
     all_models,
     implements,
+    instantiate_model,
     query_fields_nt,
     mutate_fields_nt,
+    typename,
 )
-from .query import query, query_response, arguments, on
+from .query import query, query_response, query_response_scalar, arguments, on
 from .typing import metadata
 
 from functools import wraps

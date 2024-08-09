@@ -5,8 +5,8 @@ from collections.abc import Iterable
 from typing import Generator, TypeAlias, Any
 from pydantic import BaseModel
 
-from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR, QL_INSTANTIATE
-from .model import implements
+from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
+from .model import implements, instantiate_model
 from .http import http
 
 
@@ -169,18 +169,15 @@ class _QuerySerializer:
 
 
 class _QueryResponseScalar:
-    __slots__ = ("_query_response", "_models", "_typename_to_models")
+    __slots__ = ("_query_response", "_typename_to_models")
 
     def __init__(
-        self, query_response: dict[Any, Any], models: Iterable[type[BaseModel]]
+        self,
+        query_response: dict[Any, Any],
+        typename_to_models: dict[str, type[BaseModel]],
     ) -> None:
         self._query_response = query_response
-        self._models = models
-        self._typename_to_models = {}
-
-        for model in self._models:
-            typename = getattr(model, QL_TYPENAME_ATTR)
-            self._typename_to_models[typename] = model
+        self._typename_to_models = typename_to_models
 
     def scalar(self) -> dict[str, BaseModel | list[BaseModel]]:
         data = self._query_response["data"]
@@ -233,7 +230,7 @@ class _QueryResponseScalar:
                     scalared_fields[key].append(self._scalar_dict(sub_dict))
             else:
                 scalared_fields[key] = value
-        return scalar_model(**scalared_fields)
+        return instantiate_model(scalar_model, scalared_fields)
 
 
 def arguments(model: type[BaseModel], /, **kwargs) -> _QueryOperation:
@@ -280,7 +277,12 @@ def query_response_scalar(
 ) -> dict[str, BaseModel | list[BaseModel]]:
     query_serializer = _QuerySerializer(query_models, include_typename=True)
     query_string = query_serializer.serialize()
+    typename_to_models = {}
+
+    for model in query_serializer.involved_models:
+        typename = getattr(model, QL_TYPENAME_ATTR)
+        typename_to_models[typename] = model
 
     # TODO: handle error responses
     response = http.request(query_string)
-    return _QueryResponseScalar(response, query_serializer.involved_models).scalar()
+    return _QueryResponseScalar(response, typename_to_models).scalar()

@@ -22,6 +22,11 @@ def all_models() -> dict[str, type[BaseModel]]:
     return _ALL_REGISTERD_MODELS.copy()
 
 
+def typename(model: type[BaseModel]) -> Optional[str]:
+    """returns the model typename"""
+    return getattr(model, QL_TYPENAME_ATTR, None)
+
+
 def implements(cls: type[BaseModel]) -> tuple:
     """returns the model implemention list"""
     implements = getattr(cls, QL_IMPLEMENTS_ATTR, {})
@@ -44,8 +49,8 @@ def mutate_fields_nt(cls: type[BaseModel]) -> Any:
     return getattr(cls, QL_MUTABLE_FIELDS_NT_ATTR)
 
 
-def _instantiate_model(
-    cls: type[BaseModel], query_response: dict[Any, Any]
+def instantiate_model(
+    cls: type[BaseModel], query_response: dict[str, Any]
 ) -> BaseModel:
     typename = getattr(cls, QL_TYPENAME_ATTR, None)
 
@@ -59,8 +64,17 @@ def _instantiate_model(
             instanciate_child_model = getattr(implements[typename], QL_INSTANTIATE)
             return instanciate_child_model(query_response)
 
-    queryable_fields = query_fields_nt(cls)
-    return cls(**query_response)
+    queryable_fields = query_fields_nt(cls)._asdict()
+    query_field_name_to_model_field_name = {v: k for k, v in queryable_fields.items()}
+    model_init_kwargs = {}
+
+    for field_name, value in query_response.items():
+        if field_name in query_field_name_to_model_field_name:
+            model_field_name = query_field_name_to_model_field_name[field_name]
+            model_init_kwargs[model_field_name] = value
+        else:
+            model_init_kwargs[field_name] = value
+    return cls(**model_init_kwargs)
 
 
 def _process_model(
@@ -81,7 +95,6 @@ def _process_model(
     setattr(cls, QL_MUTATE_NAME_ATTR, mutate_name or cls.__name__)
     setattr(cls, QL_TYPENAME_ATTR, typename)
     setattr(cls, QL_IMPLEMENTS_ATTR, {})
-    setattr(cls, QL_INSTANTIATE, classmethod(_instantiate_model))
 
     for mro in cls.__mro__[1:]:
         # if mro is not a `BaseModel` and it doesn't have `QL_IMPLEMENTS_ATTR`
