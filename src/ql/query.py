@@ -2,12 +2,19 @@ import enum
 from inspect import isclass
 from itertools import chain
 from collections.abc import Iterable
-from typing import Generator, TypeAlias, Any
+from typing import Generator, Optional, TypeAlias, Any
 from pydantic import BaseModel
 
 from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
-from .model import implements, instantiate_model
+from .model import implements, typename, instantiate_model
 from .http import http
+
+
+class _Placeholder(BaseModel):
+    """
+    place holder model is used in cases a functions expect to get
+    a model but the model is not really required line `fragment_ref`
+    """
 
 
 class _QueryOperationType(enum.Enum):
@@ -22,6 +29,13 @@ class _QueryOperationType(enum.Enum):
 # list of operations that are allowed
 # to be defined in query fields
 _ALLOWED_FIELD_OPERATIONS = (_QueryOperationType.REFERENCE_FRAGMENT,)
+
+# list of operations that are allowed
+# to defined when expecting to get a model
+_ALLOWED_MODEL_OPERATIONS = (
+    _QueryOperationType.ARGUMENTS,
+    _QueryOperationType.INLINE_FRAGMENT,
+)
 
 
 class _QueryOperation:
@@ -46,15 +60,22 @@ _QueryModelType: TypeAlias = tuple[
     type[BaseModel] | _QueryOperation | str,
     Iterable["str | _QueryModelType | _QueryOperation"],
 ]
+_QueryFragmentType: TypeAlias = dict[
+    tuple[str, type[BaseModel]], Iterable[str | _QueryModelType | _QueryOperation]
+]
 
 
 class _QuerySerializer:
-    __slots__ = ("_query", "_include_typename", "_involved_models")
+    __slots__ = ("_query", "_fragments", "_include_typename", "_involved_models")
 
     def __init__(
-        self, query_models: tuple[_QueryModelType, ...], include_typename: bool
+        self,
+        query_models: tuple[_QueryModelType, ...],
+        fragments: _QueryFragmentType,
+        include_typename: bool,
     ) -> None:
         self._query = query_models
+        self._fragments = fragments
         self._include_typename = include_typename
         self._involved_models: set[type[BaseModel]] = set()
 
@@ -72,6 +93,16 @@ class _QuerySerializer:
         yield "query{"
         for model_query in self._query:
             yield from self._serialize_model_query(model_query)
+
+        for fragment_data, fragment_query in self._fragments.items():
+            name, model = fragment_data
+            if (typename_ := typename(model)) is None:
+                raise ValueError(
+                    f"couldn't get model typename for fragment `{name}`, are you sure `{model.__name__}` is a ql model?"
+                )
+
+            yield f"fragment {name} on {typename_}"
+            yield from self._serialize_model_fields(fragment_query)
         yield "}"
 
     def _serialize_model_query(
@@ -141,9 +172,13 @@ class _QuerySerializer:
                     f"expected model when querying sub model got `{model_or_operation.__name__}`, does ihnerits from `pydantic.BaseModel`?"
                 )
         elif isinstance(model_or_operation, _QueryOperation):
+            if model_or_operation.op not in _ALLOWED_MODEL_OPERATIONS:
+                raise ValueError(
+                    f"operation `{model_or_operation.op}` is not allowed when expected a model"
+                )
             yield from self._serialize_operation(model_or_operation)
         elif isinstance(model_or_operation, str):
-            # if it is a list, it is probably a nested field
+            # if it is a str, it is probably a nested field
             yield model_or_operation
         else:
             raise ValueError(
@@ -160,6 +195,8 @@ class _QuerySerializer:
             query_name = getattr(operation.model, QL_QUERY_NAME_ATTR)
             arguments = ",".join(f'{k}:"{v}"' for k, v in operation.extra.items())
             yield f"{query_name}({arguments})"
+        elif operation.op is _QueryOperationType.REFERENCE_FRAGMENT:
+            yield f"...{operation.extra['fragment_name']}"
 
         if operation.model not in self._involved_models:
             # add the wrapped operation model
@@ -242,15 +279,38 @@ def on(model: type[BaseModel]) -> _QueryOperation:
     return _QueryOperation(_QueryOperationType.INLINE_FRAGMENT, model)
 
 
-def query(*query_models: _QueryModelType, include_typename: bool = True) -> str:
+def fragment_ref(name: str) -> _QueryOperation:
+    """reference defined fragment"""
+    return _QueryOperation(
+        _QueryOperationType.REFERENCE_FRAGMENT, _Placeholder, {"fragment_name": name}
+    )
+
+
+def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
+    """
+    used for setting a fragment for when calling a query function and passing the `fragments`
+    arguments.
+    """
+    return (name, model)
+
+
+def query(
+    *query_models: _QueryModelType,
+    fragments: Optional[_QueryFragmentType] = None,
+    include_typename: bool = True,
+) -> str:
     """
     returns string version of requester query
     """
-    return _QuerySerializer(query_models, include_typename).serialize()
+    return _QuerySerializer(
+        query_models, fragments=fragments or {}, include_typename=include_typename
+    ).serialize()
 
 
 def query_response(
-    *query_models: _QueryModelType, include_typename: bool = True
+    *query_models: _QueryModelType,
+    fragments: Optional[_QueryFragmentType] = {},
+    include_typename: bool = True,
 ) -> dict[Any, Any]:
     """
     converts given query model to string and preform an http request,
@@ -267,21 +327,23 @@ def query_response(
     {"data": "point": {"x": 50, "y": -50}}
     """
     query_string = _QuerySerializer(
-        query_models, include_typename=include_typename
+        query_models, fragments=fragments or {}, include_typename=include_typename
     ).serialize()
     return http.request(query_string)
 
 
 def query_response_scalar(
-    *query_models: _QueryModelType,
+    *query_models: _QueryModelType, fragments: Optional[_QueryFragmentType] = None
 ) -> dict[str, BaseModel | list[BaseModel]]:
-    query_serializer = _QuerySerializer(query_models, include_typename=True)
+    query_serializer = _QuerySerializer(
+        query_models, fragments=fragments or {}, include_typename=True
+    )
     query_string = query_serializer.serialize()
     typename_to_models = {}
 
     for model in query_serializer.involved_models:
-        typename = getattr(model, QL_TYPENAME_ATTR)
-        typename_to_models[typename] = model
+        typename_ = typename(model)
+        typename_to_models[typename_] = model
 
     # TODO: handle error responses
     response = http.request(query_string)

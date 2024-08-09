@@ -9,6 +9,7 @@ __all__ = [
     "query",
     "query_response",
     "query_response_scalar",
+    "fragment_ref",
     "arguments",
     "on",
     "http",
@@ -26,7 +27,14 @@ from .model import (
     mutate_fields_nt,
     typename,
 )
-from .query import query, query_response, query_response_scalar, arguments, on
+from .query import (
+    query,
+    query_response,
+    query_response_scalar,
+    arguments,
+    on,
+    fragment_ref,
+)
 from .typing import metadata
 
 from functools import wraps
