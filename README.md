@@ -11,6 +11,11 @@ features:
   * http send and recv information
   * scalar http responses
 
+## install
+```
+pip3 install pydantic-graphql
+```
+
 ## Query examples
 #### simple query
 > ```py
