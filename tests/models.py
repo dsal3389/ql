@@ -12,7 +12,7 @@ class Point(BaseModel):
 class Human(BaseModel):
     first_name: str
     last_name: str
-    aliva: bool
+    alive: bool
 
 
 @ql.model

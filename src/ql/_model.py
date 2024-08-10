@@ -49,34 +49,6 @@ def mutate_fields_nt(cls: type[BaseModel]) -> Any:
     return getattr(cls, QL_MUTABLE_FIELDS_NT_ATTR)
 
 
-def instantiate_model(
-    cls: type[BaseModel], query_response: dict[str, Any]
-) -> BaseModel:
-    typename = getattr(cls, QL_TYPENAME_ATTR, None)
-
-    if typename is not None and typename != query_response.get("__typename"):
-        implements = getattr(cls, QL_IMPLEMENTS_ATTR)
-
-        # if the typename matches any typename
-        # that this class implements, we need to create an instance
-        # of the child class
-        if typename in implements:
-            instanciate_child_model = getattr(implements[typename], QL_INSTANTIATE)
-            return instanciate_child_model(query_response)
-
-    queryable_fields = query_fields_nt(cls)._asdict()
-    query_field_name_to_model_field_name = {v: k for k, v in queryable_fields.items()}
-    model_init_kwargs = {}
-
-    for field_name, value in query_response.items():
-        if field_name in query_field_name_to_model_field_name:
-            model_field_name = query_field_name_to_model_field_name[field_name]
-            model_init_kwargs[model_field_name] = value
-        else:
-            model_init_kwargs[field_name] = value
-    return cls(**model_init_kwargs)
-
-
 def _process_model(
     cls: type[BaseModel],
     typename: Optional[str],

@@ -6,7 +6,7 @@ from typing import Generator, Optional, TypeAlias, Any
 from pydantic import BaseModel
 
 from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
-from ._model import implements, typename, instantiate_model
+from ._model import implements, typename, all_models, query_fields_nt
 from ._http import http
 
 
@@ -267,7 +267,29 @@ class _QueryResponseScalar:
                     scalared_fields[key].append(self._scalar_dict(sub_dict))
             else:
                 scalared_fields[key] = value
-        return instantiate_model(scalar_model, scalared_fields)
+        return self._instantiate_model(scalar_model, scalared_fields)
+
+    def _instantiate_model(
+        self, model: type[BaseModel], fields: dict[str, Any]
+    ) -> BaseModel:
+        """
+        create a new instance of the model with respect to the model's field metadata,
+        it is expected that field that expect models will already be initilized,
+        and not relay on `pydantic` for it
+        """
+        queryable_fields = query_fields_nt(model)._asdict()
+        query_field_name_to_model_field_name = {
+            v: k for k, v in queryable_fields.items()
+        }
+        model_init_kwargs = {}
+
+        for field_name, value in fields.items():
+            if field_name in query_field_name_to_model_field_name:
+                model_field_name = query_field_name_to_model_field_name[field_name]
+                model_init_kwargs[model_field_name] = value
+            else:
+                model_init_kwargs[field_name] = value
+        return model(**model_init_kwargs)
 
 
 def arguments(model: type[BaseModel], /, **kwargs) -> _QueryOperation:
@@ -292,6 +314,21 @@ def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
     arguments.
     """
     return (name, model)
+
+
+def scalar_query_response(
+    query_reponse: dict[str, Any],
+    involved_models: Optional[dict[str, type[BaseModel]]] = None,
+) -> dict[str, BaseModel | list[BaseModel]]:
+    """
+    scalars a query response with given involved models, if no `involved_models`
+    was supplied then it will use all models registered until new
+    """
+    if involved_models is None:
+        involved_models = all_models()
+    return _QueryResponseScalar(
+        query_reponse, typename_to_models=involved_models
+    ).scalar()
 
 
 def query(
@@ -343,8 +380,12 @@ def query_response_scalar(
 
     for model in query_serializer.involved_models:
         typename_ = typename(model)
+
+        if typename_ is None:
+            raise ValueError(
+                f"involved type `{model.__name__}` in query doesn't have typename defined"
+            )
         typename_to_models[typename_] = model
 
-    # TODO: handle error responses
     response = http.request(query_string)
-    return _QueryResponseScalar(response, typename_to_models).scalar()
+    return scalar_query_response(response, typename_to_models)

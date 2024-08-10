@@ -58,3 +58,42 @@ def test_invalid_query() -> None:
                 ),
             )
         )
+
+
+def test_scalar_query_response() -> None:
+    scalared = ql.scalar_query_response(
+        {
+            "data": {
+                "family": [
+                    {
+                        "count": 55,
+                        "people": [
+                            {
+                                "first_name": "foo",
+                                "last_name": "oof",
+                                "alive": True,
+                                "sick": False,
+                                "__typename": "Male",
+                            }
+                        ],
+                        "__typename": "Family",
+                    },
+                ]
+            }
+        }
+    )
+    assert scalared == {
+        "family": [
+            Family(
+                count=55,
+                people=[
+                    Male(
+                        first_name="foo",
+                        last_name="oof",
+                        alive=True,
+                        sick=False,
+                    )
+                ],
+            )
+        ]
+    }
