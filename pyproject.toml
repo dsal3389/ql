@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "dsal-graph-ql"
+name = "pydantic-graphql"
 version = "0.1.1-alpha"
 repository = "https://github.com/dsal3389/ql"
 description = "non intrusive python graphql client library wrapped around pydantic"
