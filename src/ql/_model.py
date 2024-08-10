@@ -11,7 +11,7 @@ from ._const import (
     QL_TYPENAME_ATTR,
     QL_INSTANTIATE,
 )
-from .typing import QLFieldMetadata
+from ._typing import QLFieldMetadata
 
 
 _ALL_REGISTERD_MODELS: dict[str, type[BaseModel]] = {}

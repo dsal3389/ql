@@ -6,8 +6,8 @@ from typing import Generator, Optional, TypeAlias, Any
 from pydantic import BaseModel
 
 from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
-from .model import implements, typename, instantiate_model
-from .http import http
+from ._model import implements, typename, instantiate_model
+from ._http import http
 
 
 class _Placeholder(BaseModel):

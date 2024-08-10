@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "graph-ql"
-version = "0.1.0"
+name = "dsal-graph-ql"
+version = "0.1.1-alpha"
 repository = "https://github.com/dsal3389/ql"
 description = "non intrusive python graphql client library wrapped around pydantic"
 authors = ["daniel sonbolian <dsal3389@gmail.com>"]
 keywords = ["graphql", "pydantic", "library"]
 readme = "README.md"
-packages = [{include="src/ql"}]
+packages = [{include="ql", from="src"}]
 classifiers = [
   "Framework :: Pydantic :: 2",
   "Topic :: Software Development",

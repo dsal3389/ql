@@ -17,8 +17,8 @@ __all__ = [
     "_",
 ]
 
-from .http import http
-from .model import (
+from ._http import http
+from ._model import (
     model,
     all_models,
     implements,
@@ -27,7 +27,7 @@ from .model import (
     mutate_fields_nt,
     typename,
 )
-from .query import (
+from ._query import (
     query,
     query_response,
     query_response_scalar,
@@ -35,7 +35,7 @@ from .query import (
     on,
     fragment_ref,
 )
-from .typing import metadata
+from ._typing import metadata
 
 from functools import wraps
 
