@@ -66,7 +66,7 @@ _QueryFragmentType: TypeAlias = dict[
 
 
 class _QuerySerializer:
-    __slots__ = ("_query", "_fragments", "_include_typename", "_involved_models")
+    __slots__ = ("_query", "_fragments", "_include_typename")
 
     def __init__(
         self,
@@ -77,14 +77,6 @@ class _QuerySerializer:
         self._query = query_models
         self._fragments = fragments
         self._include_typename = include_typename
-        self._involved_models: set[type[BaseModel]] = set()
-
-    @property
-    def involved_models(self) -> tuple[type[BaseModel], ...]:
-        """
-        should be called only after calling `serialize`, this property returns all found models in query
-        """
-        return tuple(self._involved_models)
 
     def serialize(self) -> str:
         return "".join(self._serialize_query())
@@ -161,12 +153,6 @@ class _QuerySerializer:
                         f"couldn't get query name from model `{model_or_operation.__name__}`, are you sure it is a ql model?"
                     )
                 yield query_name
-
-                if model_or_operation not in self._involved_models:
-                    # since we are dealing with a model, we need to add
-                    # it to the involve set and the types that model implements
-                    self._involved_models.add(model_or_operation)
-                    self._involved_models.update(implements(model_or_operation))
             else:
                 raise ValueError(
                     f"expected model when querying sub model got `{model_or_operation.__name__}`, does ihnerits from `pydantic.BaseModel`?"
@@ -198,12 +184,6 @@ class _QuerySerializer:
         elif operation.op is _QueryOperationType.REFERENCE_FRAGMENT:
             yield f"...{operation.extra['fragment_name']}"
 
-        if operation.model not in self._involved_models:
-            # add the wrapped operation model
-            # to the involved list and the type that model implements
-            self._involved_models.add(operation.model)
-            self._involved_models.update(implements(operation.model))
-
 
 class _QueryResponseScalar:
     __slots__ = ("_query_response", "_typename_to_models")
@@ -211,10 +191,9 @@ class _QueryResponseScalar:
     def __init__(
         self,
         query_response: dict[Any, Any],
-        typename_to_models: dict[str, type[BaseModel]],
     ) -> None:
         self._query_response = query_response
-        self._typename_to_models = typename_to_models
+        self._typename_to_models = all_models()
 
     def scalar(self) -> dict[str, BaseModel | list[BaseModel]]:
         data = self._query_response["data"]
@@ -316,19 +295,24 @@ def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
     return (name, model)
 
 
+def raw_query_response(query_str: str) -> dict[Any, Any]:
+    """return the http response for given query string"""
+    return http.request(query_str)
+
+
+def raw_query_response_scalar(query_str) -> dict[str, BaseModel | list[BaseModel]]:
+    """sends the given query string with http, but scalarizie the response"""
+    response = http.request(query_str)
+    return _QueryResponseScalar(response).scalar()
+
+
 def scalar_query_response(
     query_reponse: dict[str, Any],
-    involved_models: Optional[dict[str, type[BaseModel]]] = None,
 ) -> dict[str, BaseModel | list[BaseModel]]:
     """
-    scalars a query response with given involved models, if no `involved_models`
-    was supplied then it will use all models registered until new
+    scalar a graphql query response with models defined with `ql.model`
     """
-    if involved_models is None:
-        involved_models = all_models()
-    return _QueryResponseScalar(
-        query_reponse, typename_to_models=involved_models
-    ).scalar()
+    return _QueryResponseScalar(query_reponse).scalar()
 
 
 def query(
@@ -372,20 +356,5 @@ def query_response(
 def query_response_scalar(
     *query_models: _QueryModelType, fragments: Optional[_QueryFragmentType] = None
 ) -> dict[str, BaseModel | list[BaseModel]]:
-    query_serializer = _QuerySerializer(
-        query_models, fragments=fragments or {}, include_typename=True
-    )
-    query_string = query_serializer.serialize()
-    typename_to_models = {}
-
-    for model in query_serializer.involved_models:
-        typename_ = typename(model)
-
-        if typename_ is None:
-            raise ValueError(
-                f"involved type `{model.__name__}` in query doesn't have typename defined"
-            )
-        typename_to_models[typename_] = model
-
-    response = http.request(query_string)
-    return scalar_query_response(response, typename_to_models)
+    response = query_response(*query_models, fragments=fragments, include_typename=True)
+    return scalar_query_response(response)
