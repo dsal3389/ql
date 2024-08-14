@@ -6,7 +6,7 @@ from typing import Generator, Optional, TypeAlias, Any
 from pydantic import BaseModel
 
 from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
-from ._model import implements, typename, all_models, query_fields_nt
+from ._model import typename, all_models, query_fields_nt
 from ._http import http
 
 

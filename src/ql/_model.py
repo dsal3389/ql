@@ -9,7 +9,6 @@ from ._const import (
     QL_QUERYABLE_FIELDS_NT_ATTR,
     QL_MUTABLE_FIELDS_NT_ATTR,
     QL_TYPENAME_ATTR,
-    QL_INSTANTIATE,
 )
 from ._typing import QLFieldMetadata
 
