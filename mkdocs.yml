@@ -1,10 +1,16 @@
-site_name: ql
-site_url: https://dsal3389.github.io/ql/
+site_name: pydantic-ql
+site_url: https://dsal3389.github.io/ql
 repo_url: https://github.com/dsal3389/ql
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.extra
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
 theme:
   name: material
   palette:
-
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
       toggle:
@@ -27,6 +33,10 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
-
+  features:
+    - navigation.tabs
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
   icon:
     repo: fontawesome/brands/github
