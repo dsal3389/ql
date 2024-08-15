@@ -16,6 +16,9 @@ __all__ = [
     "on",
     "http",
     "metadata",
+    "QueryResponseDict",
+    "QLErrorResponseException",
+    "QLErrorDetails",
     "_",
 ]
 
@@ -39,7 +42,8 @@ from ._query import (
     on,
     fragment_ref,
 )
-from ._typing import metadata
+from ._typing import metadata, QueryResponseDict
+from ._exceptions import QLErrorResponseException, QLErrorDetails
 
 from functools import wraps
 

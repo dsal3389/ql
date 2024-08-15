@@ -1,4 +1,19 @@
-from typing import Optional
+from typing import Optional, TypedDict, Any
+
+
+class QueryErrorLocationDict(TypedDict):
+    line: int
+    column: int
+
+
+class QueryErrorDict(TypedDict):
+    message: str
+    locations: list[QueryErrorLocationDict]
+
+
+class QueryResponseDict(TypedDict):
+    data: Optional[dict[Any, Any]]
+    errors: Optional[list[QueryErrorDict]]
 
 
 class QLFieldMetadata:

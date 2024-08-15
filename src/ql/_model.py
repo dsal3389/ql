@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Optional, Any
+from typing import Callable, Optional, Any
 from pydantic import BaseModel
 
 from ._const import (
@@ -128,7 +128,7 @@ def model(
     typename: Optional[str] = None,
     query_name: Optional[str] = None,
     mutate_name: Optional[str] = None,
-) -> type[BaseModel]:
+) -> type[BaseModel] | Callable[..., type[BaseModel]]:
     """
     defines the given pydantic class as a ql model, setting `__ql_<...>__`
     attributes that are used accross the ql library to execute required operations

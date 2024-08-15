@@ -5,9 +5,11 @@ from collections.abc import Iterable
 from typing import Generator, Optional, TypeAlias, Any
 from pydantic import BaseModel
 
+from ._http import http
 from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
 from ._model import typename, all_models, query_fields_nt
-from ._http import http
+from ._exceptions import QLErrorResponseException
+from ._typing import QueryResponseDict
 
 
 class _Placeholder(BaseModel):
@@ -188,16 +190,18 @@ class _QuerySerializer:
 class _QueryResponseScalar:
     __slots__ = ("_query_response", "_typename_to_models")
 
-    def __init__(
-        self,
-        query_response: dict[Any, Any],
-    ) -> None:
+    def __init__(self, query_response: QueryResponseDict) -> None:
         self._query_response = query_response
         self._typename_to_models = all_models()
 
     def scalar(self) -> dict[str, BaseModel | list[BaseModel]]:
+        errors = self._query_response.get("errors")
+
+        if errors is not None:
+            raise QLErrorResponseException(errors)
+
         data = self._query_response["data"]
-        return self._scalar_from_models_dict(data)
+        return self._scalar_from_models_dict(data)  # type: ignore
 
     def _scalar_from_models_dict(
         self, dict_: dict[Any, Any]
@@ -295,7 +299,7 @@ def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
     return (name, model)
 
 
-def raw_query_response(query_str: str) -> dict[Any, Any]:
+def raw_query_response(query_str: str) -> QueryResponseDict:
     """return the http response for given query string"""
     return http.request(query_str)
 
@@ -307,7 +311,7 @@ def raw_query_response_scalar(query_str) -> dict[str, BaseModel | list[BaseModel
 
 
 def scalar_query_response(
-    query_reponse: dict[str, Any],
+    query_reponse: QueryResponseDict,
 ) -> dict[str, BaseModel | list[BaseModel]]:
     """
     scalar a graphql query response with models defined with `ql.model`
@@ -332,7 +336,7 @@ def query_response(
     *query_models: _QueryModelType,
     fragments: Optional[_QueryFragmentType] = {},
     include_typename: bool = True,
-) -> dict[Any, Any]:
+) -> QueryResponseDict:
     """
     converts given query model to string and preform an http request,
     returns the http response

@@ -1,7 +1,8 @@
 from typing import Callable, Any, TypeAlias, Optional
+from ._typing import QueryResponseDict
 
 
-GraphqlRequestFunc: TypeAlias = Callable[[str], dict[Any, Any]]
+GraphqlRequestFunc: TypeAlias = Callable[[str], QueryResponseDict]
 
 
 class _QLHTTPClient:
@@ -25,7 +26,7 @@ class _QLHTTPClient:
             )
         self._request_func = request_func
 
-    def request(self, query: str) -> dict[Any, Any]:
+    def request(self, query: str) -> QueryResponseDict:
         """preform request with the provided request function, if no request function is set, raise `ValueError`"""
         if self._request_func is None:
             raise ValueError(
