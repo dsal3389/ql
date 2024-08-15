@@ -225,6 +225,12 @@ class _QueryResponseScalar:
         scalar that model to the correct type
         """
         typename = dict_.pop("__typename", None)
+        if typename is None:
+            raise ValueError(
+                "couldn't scalar response, expected for sub fields to include the `__typename` field, "
+                "make sure you add `__typename` when querying sub types"
+            )
+
         scalar_model = self._typename_to_models.get(typename)
 
         if scalar_model is None:
