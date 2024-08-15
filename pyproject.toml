@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pydantic-graphql"
-version = "0.1.1-alpha"
+version = "1.0.0"
 repository = "https://github.com/dsal3389/ql"
 description = "non intrusive python graphql client library wrapped around pydantic"
 authors = ["daniel sonbolian <dsal3389@gmail.com>"]
