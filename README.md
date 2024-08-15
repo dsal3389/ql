@@ -11,6 +11,8 @@ features:
   * http send and recv information
   * scalar query responses
 
+
+
 ## TOC
  * [install](#install)
  * [what can it do](#what-can-it-do)
@@ -260,6 +262,24 @@ print(query_str)
 # query operations
 in graphql we have couple of operations that we can use
 when we query our data
+
+#### raw query
+send a simple query string and get response dict
+```py
+response = ql.raw_query_response("""
+  query {
+    Person(name: "bob") {
+      name,
+      age
+    }
+  }
+""")
+```
+
+#### scalar response
+scalar given graphql response, note that the response
+must contain the `__typename` field for any type, thats how the scalar
+knows which model should be used
 
 #### arguments
 graphql supports [arguments](https://graphql.org/learn/queries/#arguments) when querying, `ql` supports
