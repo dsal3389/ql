@@ -1,5 +1,4 @@
 # Query
-querying should be expected and simple
 
 ## raw query
 ```py

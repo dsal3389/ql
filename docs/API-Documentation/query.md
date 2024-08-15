@@ -1,4 +1,4 @@
-# Query
+# query
 reading data from apis is the most common operation we do, that's why `ql` makes it 
 easy to query data from your graphql endpoint and provide variety of query methods.
 
@@ -15,7 +15,7 @@ def query(
 
 | Name | Type | Description |
 |------|------|-------------|
-| `query_models` |  `*_QueryModelType`          | python ql structured query |
+| `query_models` | `*_QueryModelType` | python ql structured query |
 | `fragments` | `Optional[_QueryFragmentType]` | dict mapping between `ql.fragment` to the python ql structured query |
 | `include_typename` | `bool` | if include `__typename` field when querying sub types |
 

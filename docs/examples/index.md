@@ -1,4 +1,4 @@
-# examples
+# EXAMPLES
 it is easier to brief though the examples and see what this
 library can provide and most importantly, how it provides the functionalities.
 
