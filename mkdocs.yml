@@ -58,6 +58,7 @@ nav:
   - Home:
     - Welcome: index.md
     - about this library: about.md
+    - install: install.md
   - Tutorial:
     - model: tutorial/model.md
   - API Documentation:

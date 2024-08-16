@@ -37,11 +37,3 @@ query {
 
 1. makes the pydantic model compatible to use with the library
 2. function that takes a raw query string, send it via http, and scalarize the response base on the `__typename`
-
----
-
-# install
-just `pip` install the package and start using it
-```console
-pip3 install pydantic-graphql
-```
