@@ -3,11 +3,15 @@ site_url: https://dsal3389.github.io/ql
 repo_url: https://github.com/dsal3389/ql
 markdown_extensions:
   - tables
+  - attr_list
+  - md_in_html
   - admonition
   - pymdownx.extra
+  - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 theme:
   name: material
   palette:
@@ -30,15 +34,36 @@ theme:
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: pink
-      accent: teal
+      primary: teal
+      accent: pink
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
   features:
     - navigation.tabs
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.indexes
+    - navigation.top
     - content.code.copy
     - content.code.select
     - content.code.annotate
   icon:
     repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+nav:
+  - Home:
+    - Welcome: index.md
+    - about this library: about.md
+  - Tutorial:
+    - model: tutorial/model.md
+  - API Documentation:
+    - query: api/query.md
+    - http: api/http.md
+    - exceptions: api/exceptions.md
+  - Examples:
+    - Examples: examples/index.md
+    - query: examples/query.md

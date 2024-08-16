@@ -1,7 +1,6 @@
-# Query
+# Query examples
 
-## raw query
-```py
+```py title="raw query"
 import ql
 import requests
 
@@ -22,8 +21,7 @@ graphql_response = ql.raw_query_response("""
 """)
 ```
 
-## raw query scalar response
-```py
+```py title="raw query scalar response"
 import ql
 import requests
 from pydantic import BaseModel
@@ -52,8 +50,7 @@ query_response = ql.raw_query_response_scalar("""
 # {"point": [Point(x=5, y=5), Point(x=0, y=-5)]}
 ```
 
-## python query structure to string
-```py
+```py title="python query structure to string"
 import ql
 from pydantic import BaseModel
 

@@ -38,7 +38,6 @@ query_str = ql.query(
 
 ## ql.query_response
 serializes the ql query structure, send it via http and returns the response as `dict`.
-
 ```py
 def query_response(
     *query_models: _QueryModelType,
@@ -48,6 +47,16 @@ def query_response(
 ```
 
 !!! warning ""
-    http request function must be set to make this function work, [click here to view](/api/http).
+    http request function must be set to make this function work, [click here to view](../http).
+
+## ql.query_response_scalar
+serializes the ql query structure to a valid graphql query, send it via http, takes the response
+and returns a scalared dict with the defined models, this function will also raise
+graphql errors if the query responsed with `errors` field
+```py
+def query_response_scalar(
+    *query_models: _QueryModelType, fragments: Optional[_QueryFragmentType] = None
+) -> dict[str, BaseModel | list[BaseModel]]:
+```
 
 
