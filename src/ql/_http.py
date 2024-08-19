@@ -1,8 +1,8 @@
-from typing import Callable, Any, TypeAlias, Optional
+from typing import Callable, TypeAlias, Optional
 from ._typing import QueryResponseDict
 
 
-GraphqlRequestFunc: TypeAlias = Callable[[str], QueryResponseDict]
+GraphqlRequestFunc: TypeAlias = Callable[[dict[str, str]], QueryResponseDict]
 
 
 class _QLHTTPClient:
@@ -26,13 +26,19 @@ class _QLHTTPClient:
             )
         self._request_func = request_func
 
-    def request(self, query: str) -> QueryResponseDict:
+    def request_query(self, query: str) -> QueryResponseDict:
         """preform request with the provided request function, if no request function is set, raise `ValueError`"""
+        return self._request({"query": query})
+
+    def request_mutate(self, mutation: str) -> QueryResponseDict:
+        return self._request({"mutate": mutation})
+
+    def _request(self, data: dict[str, str]) -> QueryResponseDict:
         if self._request_func is None:
             raise ValueError(
                 "ql cannot preform http request, set a request function `ql.http.set_request_func`"
             )
-        return self._request_func(query)
+        return self._request_func(data)
 
 
 http = _QLHTTPClient()

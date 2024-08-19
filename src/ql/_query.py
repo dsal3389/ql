@@ -307,12 +307,12 @@ def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
 
 def raw_query_response(query_str: str) -> QueryResponseDict:
     """return the http response for given query string"""
-    return http.request(query_str)
+    return http.request_query(query_str)
 
 
 def raw_query_response_scalar(query_str) -> dict[str, BaseModel | list[BaseModel]]:
+    response = http.request_query(query_str)
     """sends the given query string with http, but scalarizie the response"""
-    response = http.request(query_str)
     return _QueryResponseScalar(response).scalar()
 
 
@@ -360,7 +360,7 @@ def query_response(
     query_string = _QuerySerializer(
         query_models, fragments=fragments or {}, include_typename=include_typename
     ).serialize()
-    return http.request(query_string)
+    return http.request_query(query_string)
 
 
 def query_response_scalar(

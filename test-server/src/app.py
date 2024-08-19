@@ -35,5 +35,9 @@ class Mutation:
         User.db.table.insert(user_data)
         return User(**user_data)
 
+    @strawberry.mutation
+    def delete_user(self, name: str) -> None:
+        User.db.table.remove(User.db.query.name == name)
+
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
