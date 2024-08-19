@@ -84,7 +84,7 @@ class _QuerySerializer:
         return "".join(self._serialize_query())
 
     def _serialize_query(self) -> Generator[str, None, None]:
-        yield "query{"
+        yield "{"
         for model_query in self._query:
             yield from self._serialize_model_query(model_query)
 

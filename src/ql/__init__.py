@@ -14,6 +14,7 @@ __all__ = [
     "fragment_ref",
     "arguments",
     "on",
+    "mutate",
     "http",
     "metadata",
     "QueryResponseDict",
@@ -42,6 +43,7 @@ from ._query import (
     on,
     fragment_ref,
 )
+from ._mutate import mutate
 from ._typing import metadata, QueryResponseDict
 from ._exceptions import QLErrorResponseException, QLErrorDetails
 
