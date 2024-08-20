@@ -39,7 +39,7 @@ def query_fields_nt(cls: type[BaseModel]) -> Any:
 
 
 def _process_model(
-    cls: type[BaseModel],
+    cls,
     typename: Optional[str],
     query_name: Optional[str],
 ):
@@ -100,7 +100,7 @@ def _process_model(
 
 
 def model(
-    cls,
+    cls=None,
     /,
     *,
     typename: Optional[str] = None,
@@ -130,9 +130,9 @@ def model(
         ql.implements(Human)  # we will see `Female` and `Male`
     """
 
-    def _process_model_proxy(cls: type[BaseModel]):
+    def _process_model_wrapper(cls):
         return _process_model(cls, typename, query_name)
 
     if cls is not None:
-        return _process_model_proxy(cls)
-    return _process_model_proxy  # type: ignore
+        return _process_model_wrapper(cls)
+    return _process_model_wrapper  # type: ignore

@@ -58,12 +58,12 @@ class _QueryOperation:
         self.extra = extra
 
 
-_QueryModelType: TypeAlias = tuple[
+QueryRequestSchema: TypeAlias = tuple[
     type[BaseModel] | _QueryOperation | str,
-    Iterable["str | _QueryModelType | _QueryOperation"],
+    Iterable["str | QueryRequestSchema | _QueryOperation"],
 ]
 _QueryFragmentType: TypeAlias = dict[
-    tuple[str, type[BaseModel]], Iterable[str | _QueryModelType | _QueryOperation]
+    tuple[str, type[BaseModel]], Iterable[str | QueryRequestSchema | _QueryOperation]
 ]
 
 
@@ -72,7 +72,7 @@ class _QuerySerializer:
 
     def __init__(
         self,
-        query_models: tuple[_QueryModelType, ...],
+        query_models: tuple[QueryRequestSchema, ...],
         fragments: _QueryFragmentType,
         include_typename: bool,
     ) -> None:
@@ -100,7 +100,7 @@ class _QuerySerializer:
         yield "}"
 
     def _serialize_model_query(
-        self, model_query: _QueryModelType
+        self, model_query: QueryRequestSchema
     ) -> Generator[str, None, None]:
         model_or_op, fields = model_query
 
@@ -120,7 +120,7 @@ class _QuerySerializer:
         yield "}"
 
     def _serialize_model_fields(
-        self, fields: Iterable[str | _QueryModelType | _QueryOperation]
+        self, fields: Iterable[str | QueryRequestSchema | _QueryOperation]
     ) -> Generator[str, None, None]:
         first = True
 
@@ -307,12 +307,12 @@ def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
 
 def raw_query_response(query_str: str) -> QueryResponseDict:
     """return the http response for given query string"""
-    return http.request_query(query_str)
+    return http.request(query_str)
 
 
 def raw_query_response_scalar(query_str) -> dict[str, BaseModel | list[BaseModel]]:
-    response = http.request_query(query_str)
     """sends the given query string with http, but scalarizie the response"""
+    response = http.request(query_str)
     return _QueryResponseScalar(response).scalar()
 
 
@@ -326,7 +326,7 @@ def scalar_query_response(
 
 
 def query(
-    *query_models: _QueryModelType,
+    *query_models: QueryRequestSchema,
     fragments: Optional[_QueryFragmentType] = None,
     include_typename: bool = True,
 ) -> str:
@@ -339,7 +339,7 @@ def query(
 
 
 def query_response(
-    *query_models: _QueryModelType,
+    *query_models: QueryRequestSchema,
     fragments: Optional[_QueryFragmentType] = {},
     include_typename: bool = True,
 ) -> QueryResponseDict:
@@ -360,11 +360,11 @@ def query_response(
     query_string = _QuerySerializer(
         query_models, fragments=fragments or {}, include_typename=include_typename
     ).serialize()
-    return http.request_query(query_string)
+    return http.request(query_string)
 
 
 def query_response_scalar(
-    *query_models: _QueryModelType, fragments: Optional[_QueryFragmentType] = None
+    *query_models: QueryRequestSchema, fragments: Optional[_QueryFragmentType] = None
 ) -> dict[str, BaseModel | list[BaseModel]]:
     response = query_response(*query_models, fragments=fragments, include_typename=True)
     return scalar_query_response(response)

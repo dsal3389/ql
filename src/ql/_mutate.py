@@ -1,4 +1,9 @@
 from typing import Generator, Any, Optional, TypeAlias
+from pydantic import BaseModel
+
+from ._typing import QueryResponseDict
+from ._query import scalar_query_response
+from ._http import http
 
 # mutate request is a tuple of mutate name, mutate data, response query
 MutateRequestSchema: TypeAlias = tuple[str, dict, Optional[str | tuple[str, ...]]]
@@ -68,4 +73,31 @@ class _MutateSerializer:
 
 
 def mutate(*mutates: MutateRequestSchema) -> str:
+    """takes python mutate schema and returns graphql mutation query"""
     return _MutateSerializer(mutates).serialize()
+
+
+def mutate_response(*mutates: MutateRequestSchema) -> QueryResponseDict:
+    """takes python mutate schema, send it via http, scalarize the query response"""
+    mutate_str = _MutateSerializer(mutates).serialize()
+    return http.request(mutate_str)
+
+
+def mutate_response_scalar(
+    *mutates: MutateRequestSchema,
+) -> dict[str, BaseModel | list[BaseModel]]:
+    response = mutate_response(*mutates)
+    return scalar_query_response(response)
+
+
+def raw_mutate_response(mutate_str: str) -> QueryResponseDict:
+    """returns the http response for the given mutation query"""
+    return http.request(mutate_str)
+
+
+def raw_mutate_response_scalar(
+    mutate_str: str,
+) -> dict[str, BaseModel | list[BaseModel]]:
+    """scalarize the http response for the given mutation query"""
+    response = http.request(mutate_str)
+    return scalar_query_response(response)

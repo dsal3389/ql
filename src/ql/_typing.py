@@ -26,7 +26,7 @@ class QLFieldMetadata:
         my_field: Annotated[str, ql.metadata(query_name="foo")]
     """
 
-    __slots__ = ("query_name", "mutate_name", "queryable", "mutable")
+    __slots__ = ("query_name", "queryable")
 
     def __init__(
         self,
