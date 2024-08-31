@@ -61,7 +61,9 @@ nav:
     - install: install.md
   - Tutorial:
     - model: tutorial/model.md
+    - query: tutorial/query.md
   - API Documentation:
+    - model: api/model.md
     - query: api/query.md
     - http: api/http.md
     - exceptions: api/exceptions.md
