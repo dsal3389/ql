@@ -6,11 +6,10 @@ from tests.models import Point, Family, Human, Male, Female
 def test_stringify_query() -> None:
     assert (
         ql.query((Point, (ql._(Point).x, ql._(Point).y)), include_typename=False)
-        == "query{Point{x,y}}"
+        == "{Point{x,y}}"
     ), "simple querying without including typename failed"
     assert (
-        ql.query((Point, (ql._(Point).x, ql._(Point).y)))
-        == "query{Point{x,y,__typename}}"
+        ql.query((Point, (ql._(Point).x, ql._(Point).y))) == "{Point{x,y,__typename}}"
     ), "simple querying with including typename failed"
 
 
@@ -32,7 +31,7 @@ def test_nested_query() -> None:
                 ),
             )
         )
-        == "query{family{count,people{first_name,...on Male{sick,__typename},...on Female{pregnant,__typename},__typename},__typename}}"
+        == "{family{count,people{first_name,...on Male{sick,__typename},...on Female{pregnant,__typename},__typename},__typename}}"
     )
 
 

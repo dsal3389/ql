@@ -2,7 +2,7 @@ import enum
 from inspect import isclass
 from itertools import chain
 from collections.abc import Iterable
-from typing import Generator, Optional, TypeAlias, Any
+from typing import Generator, Optional, TypeAlias, Any, TypeVar, Generic
 from pydantic import BaseModel
 
 from ._http import http
@@ -10,6 +10,7 @@ from ._const import QL_QUERY_NAME_ATTR, QL_TYPENAME_ATTR
 from ._model import typename, all_models, query_fields_nt
 from ._exceptions import QLErrorResponseException
 from ._typing import QueryResponseDict
+from ._types import QLModel
 
 
 class _Placeholder(BaseModel):
@@ -46,7 +47,7 @@ class _QueryOperation:
     def __init__(
         self,
         op: _QueryOperationType,
-        model: type[BaseModel],
+        model: type[QLModel],
         extra: dict[Any, Any] = {},
     ) -> None:
         if not issubclass(model, BaseModel):
@@ -59,11 +60,11 @@ class _QueryOperation:
 
 
 QueryRequestSchema: TypeAlias = tuple[
-    type[BaseModel] | _QueryOperation | str,
+    QLModel | _QueryOperation | str,
     Iterable["str | QueryRequestSchema | _QueryOperation"],
 ]
 _QueryFragmentType: TypeAlias = dict[
-    tuple[str, type[BaseModel]], Iterable[str | QueryRequestSchema | _QueryOperation]
+    tuple[str, QLModel], Iterable[str | QueryRequestSchema | _QueryOperation]
 ]
 
 
@@ -145,7 +146,7 @@ class _QuerySerializer:
                 )
 
     def _serialize_model_or_operation(
-        self, model_or_operation: type[BaseModel] | _QueryOperation | str
+        self, model_or_operation: type[QLModel] | _QueryOperation | str
     ) -> Generator[str, None, None]:
         if isclass(model_or_operation):
             if issubclass(model_or_operation, BaseModel):
@@ -194,7 +195,7 @@ class _QueryResponseScalar:
         self._query_response = query_response
         self._typename_to_models = all_models()
 
-    def scalar(self) -> dict[str, BaseModel | list[BaseModel]]:
+    def scalar(self) -> dict[str, QLModel | list[QLModel]]:
         errors = self._query_response.get("errors")
 
         if errors is not None:
@@ -205,8 +206,8 @@ class _QueryResponseScalar:
 
     def _scalar_from_models_dict(
         self, dict_: dict[Any, Any]
-    ) -> dict[str, BaseModel | list[BaseModel]]:
-        scalared = {}
+    ) -> dict[str, QLModel | list[QLModel]]:
+        scalared: dict[str, QLModel | list[QLModel]] = {}
 
         for model_key_name, values in dict_.items():
             if isinstance(values, dict):
@@ -259,11 +260,11 @@ class _QueryResponseScalar:
         return self._instantiate_model(scalar_model, scalared_fields)
 
     def _instantiate_model(
-        self, model: type[BaseModel], fields: dict[str, Any]
-    ) -> BaseModel:
+        self, model: type[QLModel], fields: dict[str, Any]
+    ) -> QLModel:
         """
         create a new instance of the model with respect to the model's field metadata,
-        it is expected that field that expect models will already be initilized,
+        it is expected that field that expect models (sub model) will already be initilized,
         and not relay on `pydantic` for it
         """
         queryable_fields = query_fields_nt(model)._asdict()
@@ -281,11 +282,11 @@ class _QueryResponseScalar:
         return model(**model_init_kwargs)
 
 
-def arguments(model: type[BaseModel], /, **kwargs) -> _QueryOperation:
+def arguments(model: type[QLModel], /, **kwargs) -> _QueryOperation:
     return _QueryOperation(_QueryOperationType.ARGUMENTS, model, kwargs)
 
 
-def on(model: type[BaseModel]) -> _QueryOperation:
+def on(model: type[QLModel]) -> _QueryOperation:
     """when querying model serialize as inline fragment"""
     return _QueryOperation(_QueryOperationType.INLINE_FRAGMENT, model)
 
@@ -297,7 +298,7 @@ def fragment_ref(name: str) -> _QueryOperation:
     )
 
 
-def fragment(name: str, model: type[BaseModel]) -> tuple[str, type[BaseModel]]:
+def fragment(name: str, model: type[QLModel]) -> tuple[str, type[QLModel]]:
     """
     used for setting a fragment for when calling a query function and passing the `fragments`
     arguments.
@@ -310,7 +311,7 @@ def raw_query_response(query_str: str) -> QueryResponseDict:
     return http.request(query_str)
 
 
-def raw_query_response_scalar(query_str) -> dict[str, BaseModel | list[BaseModel]]:
+def raw_query_response_scalar(query_str) -> dict[str, QLModel | list[QLModel]]:
     """sends the given query string with http, but scalarizie the response"""
     response = http.request(query_str)
     return _QueryResponseScalar(response).scalar()
@@ -318,7 +319,7 @@ def raw_query_response_scalar(query_str) -> dict[str, BaseModel | list[BaseModel
 
 def scalar_query_response(
     query_reponse: QueryResponseDict,
-) -> dict[str, BaseModel | list[BaseModel]]:
+) -> dict[str, QLModel | list[QLModel]]:
     """
     scalar a graphql query response with models defined with `ql.model`
     """
@@ -365,6 +366,6 @@ def query_response(
 
 def query_response_scalar(
     *query_models: QueryRequestSchema, fragments: Optional[_QueryFragmentType] = None
-) -> dict[str, BaseModel | list[BaseModel]]:
+) -> dict[str, QLModel | list[QLModel]]:
     response = query_response(*query_models, fragments=fragments, include_typename=True)
     return scalar_query_response(response)

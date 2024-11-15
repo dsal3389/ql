@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Optional, Any
+from typing import Callable, Optional, Any, overload
 from pydantic import BaseModel
 
 from ._const import (
@@ -9,6 +9,7 @@ from ._const import (
     QL_TYPENAME_ATTR,
 )
 from ._typing import QLFieldMetadata
+from ._types import QLModel
 
 
 _ALL_REGISTERD_MODELS: dict[str, type[BaseModel]] = {}
@@ -19,18 +20,18 @@ def all_models() -> dict[str, type[BaseModel]]:
     return _ALL_REGISTERD_MODELS.copy()
 
 
-def typename(model: type[BaseModel]) -> Optional[str]:
+def typename(model: type[QLModel]) -> Optional[str]:
     """returns the model typename"""
     return getattr(model, QL_TYPENAME_ATTR, None)
 
 
-def implements(cls: type[BaseModel]) -> tuple:
+def implements(cls: type[QLModel]) -> tuple:
     """returns the model implemention list"""
     implements = getattr(cls, QL_IMPLEMENTS_ATTR, {})
     return tuple(implements.values())
 
 
-def query_fields_nt(cls: type[BaseModel]) -> Any:
+def query_fields_nt(cls: type[QLModel]) -> Any:
     """
     returns the model queryable namedtuple fields, mapping between model field name to the
     query name value
@@ -39,10 +40,10 @@ def query_fields_nt(cls: type[BaseModel]) -> Any:
 
 
 def _process_model(
-    cls,
+    cls: type[QLModel],
     typename: Optional[str],
     query_name: Optional[str],
-):
+) -> type[QLModel]:
     if not issubclass(cls, BaseModel):
         raise TypeError(
             f"given class `{cls.__name__}` does not inherits from `pydantic.BaseModel`"
@@ -99,22 +100,36 @@ def _process_model(
     return cls
 
 
+@overload
+def model(__cls: type[QLModel], /) -> type[QLModel]: ...
+
+
+@overload
 def model(
-    cls=None,
+    *,
+    typename: Optional[str] = None,
+    query_name: Optional[str] = None,
+) -> Callable[[type[QLModel]], type[QLModel]]: ...
+
+
+def model(
+    __cls: Optional[type[QLModel]] = None,
     /,
     *,
     typename: Optional[str] = None,
     query_name: Optional[str] = None,
-):
+) -> Callable[[type[QLModel]], type[QLModel]] | type[QLModel]:
     """
-        defines the given pydantic class as a ql model, setting `__ql_<...>__`
-        attributes that are used accross the ql library to execute required operations
+    defines the given pydantic class as a ql model, setting `__ql_<...>__`
+    attributes that are used accross the ql library to execute required operations
 
         @ql.model
         class Person(BaseModel):
             name: str
             age: int
+
     if our pydantic class inherits from different `model`, the class will be automatically added to the `implements` list of the parent class
+
         @ql.model
         class Human(BaseModel):
             ...
@@ -130,9 +145,9 @@ def model(
         ql.implements(Human)  # we will see `Female` and `Male`
     """
 
-    def _process_model_wrapper(cls):
+    def _process_model_wrapper(cls: type[QLModel]) -> type[QLModel]:
         return _process_model(cls, typename, query_name)
 
-    if cls is not None:
-        return _process_model_wrapper(cls)
-    return _process_model_wrapper  # type: ignore
+    if __cls is None:
+        return _process_model_wrapper
+    return _process_model_wrapper(__cls)
