@@ -1,14 +1,16 @@
-from collections import namedtuple
-from typing import Optional, Any
+import enum
+from typing import Callable, Any, overload
 from pydantic import BaseModel
 
 from ._const import (
     QL_QUERY_NAME_ATTR,
     QL_IMPLEMENTS_ATTR,
-    QL_QUERYABLE_FIELDS_NT_ATTR,
+    QL_QUERYABLE_FIELDS_ATTR,
+    QL_MUTABLE_FIELDS_ATTR,
     QL_TYPENAME_ATTR,
 )
 from ._typing import QLFieldMetadata
+from ._types import QLModel
 
 
 _ALL_REGISTERD_MODELS: dict[str, type[BaseModel]] = {}
@@ -19,30 +21,34 @@ def all_models() -> dict[str, type[BaseModel]]:
     return _ALL_REGISTERD_MODELS.copy()
 
 
-def typename(model: type[BaseModel]) -> Optional[str]:
+def typename(model: type[QLModel]) -> str | None:
     """returns the model typename"""
     return getattr(model, QL_TYPENAME_ATTR, None)
 
 
-def implements(cls: type[BaseModel]) -> tuple:
+def implements(cls: type[QLModel]) -> tuple[type[QLModel]]:
     """returns the model implemention list"""
     implements = getattr(cls, QL_IMPLEMENTS_ATTR, {})
     return tuple(implements.values())
 
 
-def query_fields_nt(cls: type[BaseModel]) -> Any:
+def model_queryable_fields(cls: type[QLModel]) -> Any:
     """
     returns the model queryable namedtuple fields, mapping between model field name to the
     query name value
     """
-    return getattr(cls, QL_QUERYABLE_FIELDS_NT_ATTR)
+    return getattr(cls, QL_QUERYABLE_FIELDS_ATTR)
+
+
+def model_mutable_fields(cls: type[QLModel]) -> Any:
+    return getattr(cls, QL_MUTABLE_FIELDS_ATTR)
 
 
 def _process_model(
-    cls,
-    typename: Optional[str],
-    query_name: Optional[str],
-):
+    cls: type[QLModel],
+    typename: str | None,
+    query_name: str | None,
+) -> type[QLModel]:
     if not issubclass(cls, BaseModel):
         raise TypeError(
             f"given class `{cls.__name__}` does not inherits from `pydantic.BaseModel`"
@@ -67,9 +73,10 @@ def _process_model(
         __implements__[typename] = cls
 
     queryable_fields: list[tuple[str, str]] = []
+    mutable_fields: list[tuple[str, str]] = []
 
     for name, field_info in cls.model_fields.items():
-        ql_field_metadata: Optional[QLFieldMetadata] = None
+        ql_field_metadata: QLFieldMetadata | None = None
 
         for metadata in field_info.metadata:
             if isinstance(metadata, QLFieldMetadata):
@@ -77,44 +84,57 @@ def _process_model(
                 break
 
         if ql_field_metadata is None:
-            ql_field_metadata = QLFieldMetadata(
-                query_name=name,
-            )
+            ql_field_metadata = QLFieldMetadata(query_name=name, mutate_name=name)
+
         if ql_field_metadata.queryable:
             queryable_fields.append((name, ql_field_metadata.query_name or name))
+        if ql_field_metadata.mutable:
+            mutable_fields.append((name, ql_field_metadata.mutate_name or name))
 
-    # namedtuples that map between the field name to the field `query_name`/`mutate_name`
-    # it is a namedtuple, so it will be dot access, type ignore because `mypy`
-    # doesn't support namedtuples with dynamic fields
-    QueryFields = namedtuple("QueryFields", (qf[0] for qf in queryable_fields))  # type: ignore
-
+    # create enum between the model field name to the corresponding
+    # query/mutate name that should be used when mutating/querying
     setattr(
         cls,
-        QL_QUERYABLE_FIELDS_NT_ATTR,
-        QueryFields(*(qf[1] for qf in queryable_fields)),
+        QL_QUERYABLE_FIELDS_ATTR,
+        enum.Enum("QueryableFieldsEnum", queryable_fields),
     )
+    setattr(cls, QL_MUTABLE_FIELDS_ATTR, enum.Enum("MutableFieldsEnum", mutable_fields))
 
     # register the model to the list
     _ALL_REGISTERD_MODELS[typename] = cls
     return cls
 
 
+@overload
+def model(__cls: type[QLModel], /) -> type[QLModel]: ...
+
+
+@overload
 def model(
-    cls=None,
+    *,
+    typename: str | None = None,
+    query_name: str | None = None,
+) -> Callable[[type[QLModel]], type[QLModel]]: ...
+
+
+def model(
+    __cls: type[QLModel] | None = None,
     /,
     *,
-    typename: Optional[str] = None,
-    query_name: Optional[str] = None,
-):
+    typename: str | None = None,
+    query_name: str | None = None,
+) -> Callable[[type[QLModel]], type[QLModel]] | type[QLModel]:
     """
-        defines the given pydantic class as a ql model, setting `__ql_<...>__`
-        attributes that are used accross the ql library to execute required operations
+    defines the given pydantic class as a ql model, setting `__ql_<...>__`
+    attributes that are used accross the ql library to execute required operations
 
         @ql.model
         class Person(BaseModel):
             name: str
             age: int
+
     if our pydantic class inherits from different `model`, the class will be automatically added to the `implements` list of the parent class
+
         @ql.model
         class Human(BaseModel):
             ...
@@ -130,9 +150,9 @@ def model(
         ql.implements(Human)  # we will see `Female` and `Male`
     """
 
-    def _process_model_wrapper(cls):
+    def _process_model_wrapper(cls: type[QLModel]) -> type[QLModel]:
         return _process_model(cls, typename, query_name)
 
-    if cls is not None:
-        return _process_model_wrapper(cls)
-    return _process_model_wrapper  # type: ignore
+    if __cls is None:
+        return _process_model_wrapper
+    return _process_model_wrapper(__cls)

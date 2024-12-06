@@ -1,4 +1,4 @@
-from typing import Callable, TypeAlias, Optional
+from typing import Callable, TypeAlias
 from ._typing import QueryResponseDict
 
 
@@ -16,7 +16,7 @@ class _QLHTTPClient:
     __slots__ = ("_request_func",)
 
     def __init__(self) -> None:
-        self._request_func: Optional[GraphqlRequestFunc] = None
+        self._request_func: GraphqlRequestFunc | None = None
 
     def set_request_func(self, request_func: GraphqlRequestFunc) -> None:
         """set the library graphql request function, if already set, overwrite"""

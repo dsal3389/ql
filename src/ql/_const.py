@@ -9,6 +9,6 @@ QL_IMPLEMENTS_ATTR = "__ql_implements__"
 
 QL_INSTANTIATE = "__ql_instantiate__"
 
-# returns namedtuple for accessing
-# model fields with dot
-QL_QUERYABLE_FIELDS_NT_ATTR = "__ql_query_fields_nt__"
+# the attribute for the model queryable/mutable fields
+QL_QUERYABLE_FIELDS_ATTR = "__ql_query_fields_enum__"
+QL_MUTABLE_FIELDS_ATTR = "__ql_mutate_fields_enum__"
