@@ -57,15 +57,15 @@ print(ql.implements(Human))
 # (<class '__main__.Male'>, <class '__main__.Female'>)
 ```
 
-## ql.query_fields_nt
-returns a namedtuple of all queryable fields in the given model, mapping between
+## ql.model_queryable_fields
+returns an enum of all queryable fields in the given model, mapping between
 the model field name to the query name.
 
 !!! info
     this function is also aliased as `ql._` because it is common
 
 ```py
-def query_fields_nt(cls: type[BaseModel]) -> Any
+def model_queryable_fields(cls: type[BaseModel]) -> Any
 ```
 
 | Name | Type | Description |
@@ -85,8 +85,10 @@ class Article(BaseModel):
 
     foo: Annotated[str, ql.metadata(queryable=False)]
 
-print(ql.query_fields_nt(Article).name)         # "title"
-print(ql.query_fields_nt(Article).description)  # "description"
-print(ql.query_fields_nt(Article).foo)          # exception
+fields = ql.model_queryable_fields(Article)
+
+print(fields.name)         # "title"
+print(fields.description)  # "description"
+print(fields.foo)          # exception
 
 ```

@@ -1,11 +1,12 @@
-from collections import namedtuple
+import enum
 from typing import Callable, Any, overload
 from pydantic import BaseModel
 
 from ._const import (
     QL_QUERY_NAME_ATTR,
     QL_IMPLEMENTS_ATTR,
-    QL_QUERYABLE_FIELDS_NT_ATTR,
+    QL_QUERYABLE_FIELDS_ATTR,
+    QL_MUTABLE_FIELDS_ATTR,
     QL_TYPENAME_ATTR,
 )
 from ._typing import QLFieldMetadata
@@ -31,12 +32,16 @@ def implements(cls: type[QLModel]) -> tuple[type[QLModel]]:
     return tuple(implements.values())
 
 
-def query_fields_nt(cls: type[QLModel]) -> Any:
+def model_queryable_fields(cls: type[QLModel]) -> Any:
     """
     returns the model queryable namedtuple fields, mapping between model field name to the
     query name value
     """
-    return getattr(cls, QL_QUERYABLE_FIELDS_NT_ATTR)
+    return getattr(cls, QL_QUERYABLE_FIELDS_ATTR)
+
+
+def model_mutable_fields(cls: type[QLModel]) -> Any:
+    return getattr(cls, QL_MUTABLE_FIELDS_ATTR)
 
 
 def _process_model(
@@ -68,6 +73,7 @@ def _process_model(
         __implements__[typename] = cls
 
     queryable_fields: list[tuple[str, str]] = []
+    mutable_fields: list[tuple[str, str]] = []
 
     for name, field_info in cls.model_fields.items():
         ql_field_metadata: QLFieldMetadata | None = None
@@ -78,22 +84,21 @@ def _process_model(
                 break
 
         if ql_field_metadata is None:
-            ql_field_metadata = QLFieldMetadata(
-                query_name=name,
-            )
+            ql_field_metadata = QLFieldMetadata(query_name=name, mutate_name=name)
+
         if ql_field_metadata.queryable:
             queryable_fields.append((name, ql_field_metadata.query_name or name))
+        if ql_field_metadata.mutable:
+            mutable_fields.append((name, ql_field_metadata.mutate_name or name))
 
-    # namedtuples that map between the field name to the field `query_name`/`mutate_name`
-    # it is a namedtuple, so it will be dot access, type ignore because `mypy`
-    # doesn't support namedtuples with dynamic fields
-    QueryFields = namedtuple("QueryFields", (qf[0] for qf in queryable_fields))  # type: ignore
-
+    # create enum between the model field name to the corresponding
+    # query/mutate name that should be used when mutating/querying
     setattr(
         cls,
-        QL_QUERYABLE_FIELDS_NT_ATTR,
-        QueryFields(*(qf[1] for qf in queryable_fields)),
+        QL_QUERYABLE_FIELDS_ATTR,
+        enum.Enum("QueryableFieldsEnum", queryable_fields),
     )
+    setattr(cls, QL_MUTABLE_FIELDS_ATTR, enum.Enum("MutableFieldsEnum", mutable_fields))
 
     # register the model to the list
     _ALL_REGISTERD_MODELS[typename] = cls

@@ -1,7 +1,8 @@
 __all__ = [
     "model",
     "all_models",
-    "query_fields_nt",
+    "model_queryable_fields",
+    "model_mutable_fields",
     "implements",
     "typename",
     "query",
@@ -26,7 +27,8 @@ from ._model import (
     model,
     all_models,
     implements,
-    query_fields_nt,
+    model_queryable_fields,
+    model_mutable_fields,
     typename,
 )
 from ._query import (
@@ -46,7 +48,7 @@ from ._exceptions import QLErrorResponseException, QLErrorDetails
 from functools import wraps
 
 
-@wraps(query_fields_nt)
+@wraps(model_queryable_fields)
 def _(*args, **kwargs):
     """thin wrapper around the `query_fields_nt`"""
-    return query_fields_nt(*args, **kwargs)
+    return model_queryable_fields(*args, **kwargs)

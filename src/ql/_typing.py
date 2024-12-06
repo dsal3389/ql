@@ -1,4 +1,5 @@
 from typing import TypedDict, Any
+from typing_extensions import NotRequired
 
 
 class QueryErrorLocationDict(TypedDict):
@@ -13,7 +14,7 @@ class QueryErrorDict(TypedDict):
 
 class QueryResponseDict(TypedDict):
     data: dict[Any, Any] | None
-    errors: list[QueryErrorDict] | None
+    errors: NotRequired[list[QueryErrorDict]]
 
 
 class QLFieldMetadata:
@@ -30,6 +31,7 @@ class QLFieldMetadata:
 
     def __init__(
         self,
+        *,
         query_name: str | None = None,
         queryable: bool = True,
         mutate_name: str | None = None,
