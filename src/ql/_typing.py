@@ -31,7 +31,6 @@ class QLFieldMetadata:
 
     def __init__(
         self,
-        *,
         query_name: str | None = None,
         queryable: bool = True,
         mutate_name: str | None = None,
@@ -44,10 +43,15 @@ class QLFieldMetadata:
 
 
 def metadata(
+    *,
+    mutate_name: str | None = None,
     query_name: str | None = None,
     queryable: bool = True,
+    mutable: bool = True,
 ) -> QLFieldMetadata:
     return QLFieldMetadata(
+        mutate_name=mutate_name,
         query_name=query_name,
         queryable=queryable,
+        mutable=mutable,
     )
