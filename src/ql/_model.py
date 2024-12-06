@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Callable, Optional, Any, overload
+from typing import Callable, Any, overload
 from pydantic import BaseModel
 
 from ._const import (
@@ -20,12 +20,12 @@ def all_models() -> dict[str, type[BaseModel]]:
     return _ALL_REGISTERD_MODELS.copy()
 
 
-def typename(model: type[QLModel]) -> Optional[str]:
+def typename(model: type[QLModel]) -> str | None:
     """returns the model typename"""
     return getattr(model, QL_TYPENAME_ATTR, None)
 
 
-def implements(cls: type[QLModel]) -> tuple:
+def implements(cls: type[QLModel]) -> tuple[type[QLModel]]:
     """returns the model implemention list"""
     implements = getattr(cls, QL_IMPLEMENTS_ATTR, {})
     return tuple(implements.values())
@@ -41,8 +41,8 @@ def query_fields_nt(cls: type[QLModel]) -> Any:
 
 def _process_model(
     cls: type[QLModel],
-    typename: Optional[str],
-    query_name: Optional[str],
+    typename: str | None,
+    query_name: str | None,
 ) -> type[QLModel]:
     if not issubclass(cls, BaseModel):
         raise TypeError(
@@ -70,7 +70,7 @@ def _process_model(
     queryable_fields: list[tuple[str, str]] = []
 
     for name, field_info in cls.model_fields.items():
-        ql_field_metadata: Optional[QLFieldMetadata] = None
+        ql_field_metadata: QLFieldMetadata | None = None
 
         for metadata in field_info.metadata:
             if isinstance(metadata, QLFieldMetadata):
@@ -107,17 +107,17 @@ def model(__cls: type[QLModel], /) -> type[QLModel]: ...
 @overload
 def model(
     *,
-    typename: Optional[str] = None,
-    query_name: Optional[str] = None,
+    typename: str | None = None,
+    query_name: str | None = None,
 ) -> Callable[[type[QLModel]], type[QLModel]]: ...
 
 
 def model(
-    __cls: Optional[type[QLModel]] = None,
+    __cls: type[QLModel] | None = None,
     /,
     *,
-    typename: Optional[str] = None,
-    query_name: Optional[str] = None,
+    typename: str | None = None,
+    query_name: str | None = None,
 ) -> Callable[[type[QLModel]], type[QLModel]] | type[QLModel]:
     """
     defines the given pydantic class as a ql model, setting `__ql_<...>__`

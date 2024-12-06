@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict, Any
+from typing import TypedDict, Any
 
 
 class QueryErrorLocationDict(TypedDict):
@@ -12,8 +12,8 @@ class QueryErrorDict(TypedDict):
 
 
 class QueryResponseDict(TypedDict):
-    data: Optional[dict[Any, Any]]
-    errors: Optional[list[QueryErrorDict]]
+    data: dict[Any, Any] | None
+    errors: list[QueryErrorDict] | None
 
 
 class QLFieldMetadata:
@@ -26,19 +26,23 @@ class QLFieldMetadata:
         my_field: Annotated[str, ql.metadata(query_name="foo")]
     """
 
-    __slots__ = ("query_name", "queryable")
+    __slots__ = ("query_name", "queryable", "mutate_name", "mutable")
 
     def __init__(
         self,
-        query_name: Optional[str] = None,
+        query_name: str | None = None,
         queryable: bool = True,
+        mutate_name: str | None = None,
+        mutable: bool = True,
     ) -> None:
         self.query_name = query_name
+        self.mutate_name = mutate_name
         self.queryable = queryable
+        self.mutable = mutable
 
 
 def metadata(
-    query_name: Optional[str] = None,
+    query_name: str | None = None,
     queryable: bool = True,
 ) -> QLFieldMetadata:
     return QLFieldMetadata(

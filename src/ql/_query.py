@@ -2,7 +2,8 @@ import enum
 from inspect import isclass
 from itertools import chain
 from collections.abc import Iterable
-from typing import Generator, Optional, TypeAlias, Any, TypeVar, Generic
+from typing import TypeAlias, Any
+from collections.abc import Generator
 from pydantic import BaseModel
 
 from ._http import http
@@ -328,7 +329,7 @@ def scalar_query_response(
 
 def query(
     *query_models: QueryRequestSchema,
-    fragments: Optional[_QueryFragmentType] = None,
+    fragments: _QueryFragmentType | None = None,
     include_typename: bool = True,
 ) -> str:
     """
@@ -341,7 +342,7 @@ def query(
 
 def query_response(
     *query_models: QueryRequestSchema,
-    fragments: Optional[_QueryFragmentType] = {},
+    fragments: _QueryFragmentType | None = None,
     include_typename: bool = True,
 ) -> QueryResponseDict:
     """
@@ -365,7 +366,7 @@ def query_response(
 
 
 def query_response_scalar(
-    *query_models: QueryRequestSchema, fragments: Optional[_QueryFragmentType] = None
+    *query_models: QueryRequestSchema, fragments: _QueryFragmentType | None = None
 ) -> dict[str, QLModel | list[QLModel]]:
     response = query_response(*query_models, fragments=fragments, include_typename=True)
     return scalar_query_response(response)
