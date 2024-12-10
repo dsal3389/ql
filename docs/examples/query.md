@@ -50,6 +50,27 @@ query_response = ql.raw_query_response_scalar("""
 # {"point": [Point(x=5, y=5), Point(x=0, y=-5)]}
 ```
 
+```py title="query builder pattern"
+import ql
+from pydantic import BaseModel
+
+@ql.model
+class Human(BaseModel):
+  name: str
+  age: int
+
+
+query = ql.QueryBuilder()
+  .model(
+    ql.QueryModelBuilder(Human)
+      .fields(
+        ql._(Human).name,
+        ql._(Human).age
+      )
+  )
+  .scalar()  # also possible options `build` and `query`
+```
+
 ```py title="python query structure to string"
 import ql
 from pydantic import BaseModel
