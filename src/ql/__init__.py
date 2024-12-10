@@ -5,6 +5,9 @@ __all__ = [
     "model_mutable_fields",
     "implements",
     "typename",
+    "QueryBuilder",
+    "QueryModelBuilder",
+    "QueryFragmentBuilder",
     "query",
     "query_response",
     "query_response_scalar",
@@ -32,6 +35,9 @@ from ._model import (
     typename,
 )
 from ._query import (
+    QueryBuilder,
+    QueryModelBuilder,
+    QueryFragmentBuilder,
     query,
     query_response,
     query_response_scalar,
