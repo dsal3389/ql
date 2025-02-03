@@ -7,6 +7,7 @@ markdown_extensions:
   - md_in_html
   - admonition
   - pymdownx.extra
+  - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
@@ -24,9 +25,8 @@ theme:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default 
-      primary: pink
-      accent: pink
-      accent: teal
+      primary: lime
+      accent: green
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -34,8 +34,8 @@ theme:
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
-      accent: pink
+      primary: black
+      accent: lime
       toggle:
         icon: material/brightness-4
         name: Switch to system preference

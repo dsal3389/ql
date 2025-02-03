@@ -101,9 +101,16 @@ def test_scalar_query_response() -> None:
 
 def test_query_builder() -> None:
     assert (
-        ql.QueryBuilder().model(
-            ql.QueryModelBuilder(Family)
-            .fields(ql._(Family).count)
-            .model_field(ql.QueryModelBuilder("people").fields("first_name", "alive"))
-        )
+        ql.QueryBuilder()
+            .model(
+                ql.QueryModelBuilder(Family)
+                    .fields(
+                        ql._(Family).count,
+                        ql.QueryModelBuilder("people")
+                            .fields(
+                                "first_name",
+                                "alive"
+                            )
+                    )
+            )
     ).build() == "{family{count,people{first_name,alive,__typename},__typename}}"

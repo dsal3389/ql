@@ -19,22 +19,24 @@ def query(
 | `fragments` | `Optional[_QueryFragmentType]` | dict mapping between `ql.fragment` to the python ql structured query |
 | `include_typename` | `bool` | if include `__typename` field when querying sub types |
 
-```py title="example.py"
-import ql
-from pydantic import BaseModel
 
-@ql.model
-class Point(BaseModel):
-  x: int
-  y: int
+??? example
+    ```py
+    import ql
+    from pydantic import BaseModel
 
-query_str = ql.query(
-  (Point, (
-    ql._(Point).x,
-    ql._(Point).y
-  ))
-)
-```
+    @ql.model
+    class Point(BaseModel):
+      x: int
+      y: int
+
+    query_str = ql.query(
+      (Point, (
+        ql._(Point).x,
+        ql._(Point).y
+      ))
+    )
+    ```
 
 
 ## ql.query_response
@@ -62,14 +64,15 @@ def raw_query_response(query_str: str) -> QueryResponseDict
 |------|------|-------------|
 | query_str | `str` | the graphql query string
 
-```py
-response = ql.raw_query_response("""{
-  point {
-    x
-    y
-  }
-}""")
-```
+??? example
+    ```py
+    response = ql.raw_query_response("""{
+      point {
+        x
+        y
+      }
+    }""")
+    ```
 
 
 ## ql.raw_query_response_scalar
@@ -88,15 +91,16 @@ def raw_query_response_scalar(query_str) -> dict[str, QLModel | list[QLModel]]
 |------|------|-------------|
 | query_str | `str` | the graphql query string |
 
-```py
-response = ql.raw_query_response("""{
-  point {
-    x
-    y
-    __typename
-  }
-}""")
-```
+??? example
+    ```py
+    response = ql.raw_query_response("""{
+      point {
+        x
+        y
+        __typename
+      }
+    }""")
+    ```
 
 
 ## ql.query_response_scalar
@@ -127,24 +131,25 @@ def scalar_query_response(
 |------|------|-------------|
 | query_response | `dict` | graphql query response |
 
-```py
-import ql
-from pydantic import BaseModel
+??? example
+    ```py
+    import ql
+    from pydantic import BaseModel
 
-@ql.model
-class Point(BaseModel):
-  x: int
-  y: int
+    @ql.model
+    class Point(BaseModel):
+      x: int
+      y: int
 
-scalarized = ql.scalar_query_response({
-  "point": {
-    "x": 50,
-    "y": 50,
-    "__typename": "Point"
-  }
-})
-assert isinstance(scalarized["point"], Point)
-```
+    scalarized = ql.scalar_query_response({
+      "point": {
+        "x": 50,
+        "y": 50,
+        "__typename": "Point"
+      }
+    })
+    assert isinstance(scalarized["point"], Point)
+    ```
 
 ## ql.QueryBuilder
 builder pattern to build graphql queries easily, allows all the functionality of [query_response](#qlquery_response), [scalar_query_response](#qlscalar_query_response) and [query](#qlquery)
@@ -154,42 +159,43 @@ in a nicer interface
 |------|------|-------------|
 | include_typename | `bool` | if you include the `__typename` field |
 
-```py
-import ql
-from pydantic import BaseModel
+??? example
+    ```py
+    import ql
+    from pydantic import BaseModel
 
-@ql.model
-class Parent(BaseMode):
-  first_name: str
-  last_name: str
+    @ql.model
+    class Parent(BaseMode):
+      first_name: str
+      last_name: str
 
-@ql.model
-class Family(BaseModel):
-  father: Parent
-  mother: Parent
+    @ql.model
+    class Family(BaseModel):
+      father: Parent
+      mother: Parent
 
-scalared = (
-  ql.QueryBuilder()
-    .model(
-      ql.QueryModelBuilder(Family)
-        .model_field(
-          ql.QueryModelBuilder("father")
-            .fields(ql.fragment_ref("parent_query"))
+    scalared = (
+      ql.QueryBuilder()
+        .model(
+          ql.QueryModelBuilder(Family)
+            .model_field(
+              ql.QueryModelBuilder("father")
+                .fields(ql.fragment_ref("parent_query"))
+            )
+            .model_field(
+              ql.QueryModelBuilder("mother")
+                .fields(ql.fragment_ref("parent_query"))
+            )
         )
-        .model_field(
-          ql.QueryModelBuilder("mother")
-            .fields(ql.fragment_ref("parent_query"))
+        .fragment(
+          ql.QueryFragmentBuilder("parent_query", Parent)
+            .fields("first_name", "last_name")
         )
+        .scalar()
     )
-    .fragment(
-      ql.QueryFragmentBuilder("parent_query", Parent)
-        .fields("first_name", "last_name")
-    )
-    .scalar()
-)
-```
+    ```
 
-### model
+### .model()
 takes a `QueryModelBuilder` to add new model query
 
 ```py
@@ -200,7 +206,7 @@ def model(self, model_builder: QueryModelBuilder) -> Self
 |------|------|-------------|
 | model_builder | `QueryModelBuilder` | the query model builder instance |
 
-### fragment
+### .fragment()
 add fragment to the query
 
 ```py
@@ -211,14 +217,14 @@ def fragment(self, fragment_builder: QueryFragmentBuilder) -> Self
 |------|------|-------------|
 | fragment_builder | `QueryFragmentBuilder` | the query fragment builder instance |
 
-### build
+### .build()
 returns the query as graphql string
 
 ```py
 def build(self) -> str
 ```
 
-### query
+### .query()
 converts the query to string, performs http request and returns
 the graphql response
 
@@ -226,7 +232,7 @@ the graphql response
 def query(self) -> QueryResponseDict
 ```
 
-### scalar
+### .scalar()
 converts the query to string, performs http request, and scalar the 
 graphql request to python classes
 
@@ -242,7 +248,7 @@ a specific model
 |------|------|-------------|
 | model | `str | enum.Enum | type[QLModel]` | the model to build the query for |
 
-### fields
+### .fields()
 add fields to query from the model
 
 ```py
@@ -253,13 +259,6 @@ def fields(self, *fields: QueryFieldTypes) -> Self
 |------|------|-------------|
 | *fields | `QueryFieldTypes` | list of fields to add |
 
-### model_field
-add field which is a sub model
-
-```py
-def model_field(self, model_builder: QueryModelBuilder) -> Self
-```
-
 ## ql.QueryFragmentBuilder
 class to build fragments 
 
@@ -268,7 +267,7 @@ class to build fragments
 | name | `str` | the fragment name |
 | model | `str | enum.Enum | type[QLModel]` | the model to build the query for |
 
-### fields
+### .fields()
 add fields to query from the model
 
 ```py

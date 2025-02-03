@@ -16,17 +16,18 @@ def set_request_func(request_func: GraphqlRequestFunc) -> None:
 |------|------|-------------|
 | `request_func` | `GraphqlRequestFunc` | callable function that accepts a string and returns dict |
 
-```py title="example.py"
-import ql
-import requests
+??? example
+    ```py
+    import ql
+    import requests
 
-def request_graphql(query: str) -> dict:
-  response = requests.post("...", json={"query": query})
-  response.raise_for_status()  # can handle errors here in one place
-  return response.json()
+    def request_graphql(query: str) -> dict:
+      response = requests.post("...", json={"query": query})
+      response.raise_for_status()  # can handle errors here in one place
+      return response.json()
 
-ql.http.set_request_func(request_graphql)
-```
+    ql.http.set_request_func(request_graphql)
+    ```
 
 ---
 

@@ -16,20 +16,21 @@ QLErrorResponseException(errors: list[QueryErrorDict])
 |------|------|-------------|
 | `errors` | `list[QueryErrorDict]` | list of graphql errors |
 
-```py title="example.py"
-import ql
+??? example
+    ```py
+    import ql
 
-try:
-  _ = ql.scalar_query_response({
-    "errors": [
-      {"message": "example for error", "locations": {"line": 0, "column": 0}},
-      {"message": "I have another error in my query!", "locations": {"line": 0, "column": 0}},
-    ],
-    "data": None
-  })
-except ql.QLErrorResponseException:
-  print("damn... my graphql query failed...")
-```
+    try:
+      _ = ql.scalar_query_response({
+        "errors": [
+          {"message": "example for error", "locations": {"line": 0, "column": 0}},
+          {"message": "I have another error in my query!", "locations": {"line": 0, "column": 0}},
+        ],
+        "data": None
+      })
+    except ql.QLErrorResponseException:
+      print("damn... my graphql query failed...")
+    ```
 
 ### error_details `property`
 returns a list of `QLErrorDetails`.

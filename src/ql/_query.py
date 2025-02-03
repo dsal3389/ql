@@ -308,18 +308,18 @@ class QueryModelBuilder:
         self._model = model
         self._fields: list[QueryFieldTypes] = []
 
-    def fields(self, *fields: QueryFieldTypes) -> Self:
-        self._fields.extend(fields)
-        return self
-
-    def model_field(self, model_builder: QueryModelBuilder) -> Self:
-        self._fields.append(model_builder.build())
+    def fields(self, *fields: QueryFieldTypes | QueryModelBuilder) -> Self:
+        for field in fields:
+            if isinstance(field, QueryModelBuilder):
+                self._fields.append(field.build())
+            else:
+                self._fields.append(field)
         return self
 
     def build(self) -> QueryRequestSchema:
         assert (
             self._fields is not None
-        ), "cannot build model query, not fields were added"
+        ), "cannot build model query, no fields were added"
         return (self._model, self._fields)
 
 
@@ -331,7 +331,7 @@ class QueryFragmentBuilder(QueryModelBuilder):
     def build(self) -> QueryFragmentSchema:  # type: ignore
         assert (
             self._fields is not None
-        ), "cannot build fragment query, not fields were added"
+        ), "cannot build fragment query, no fields were added"
         return (fragment(self._name, self._model), self._fields)  # type: ignore
 
 
