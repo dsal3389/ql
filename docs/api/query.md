@@ -1,7 +1,8 @@
 # query
-reading data from apis is the most common operation we do, that's why `ql` makes it 
+reading data from apis is the most common operation we do, that's why `ql` makes it
 easy to query data from your graphql endpoint and provide variety of query methods.
 
+---
 
 ## ql.query
 takes python ql query structure and returns a valid graphql query string.
@@ -38,9 +39,11 @@ def query(
     )
     ```
 
+---
 
 ## ql.query_response
 serializes the ql query structure, send it via http and returns the response as `dict`.
+
 ```py
 def query_response(
     *query_models: _QueryModelType,
@@ -48,16 +51,18 @@ def query_response(
     include_typename: bool = True,
 ) -> QueryResponseDict:
 ```
-
-!!! warning ""
+??? warning "prerequisite"
     http request function must be set to make this function work, [click here to view](../http).
 
+---
 
 ## ql.raw_query_response
 takes raw query string and returns the response for
 the given query
 ```py
-def raw_query_response(query_str: str) -> QueryResponseDict
+def raw_query_response(
+    query_str: str
+) -> QueryResponseDict
 ```
 
 | Name | Type | Description |
@@ -74,22 +79,26 @@ def raw_query_response(query_str: str) -> QueryResponseDict
     }""")
     ```
 
+---
 
 ## ql.raw_query_response_scalar
-takes raw query string, perfom an http request, and scalarize 
+takes raw query string, perfom an http request, and scalarize
 the response based on the '__typename'
 
 ```py
-def raw_query_response_scalar(query_str) -> dict[str, QLModel | list[QLModel]]
+def raw_query_response_scalar(
+    query_str: str
+) -> dict[str, QLModel | list[QLModel]]
 ```
-
-!!! warning ""
-    this functionality can only work if the query string
-    contains the `__typename` field
 
 | Name | Type | Description |
 |------|------|-------------|
 | query_str | `str` | the graphql query string |
+
+
+??? warning "requirement"
+    this functionality can only work if the query string
+    contains the `__typename` field
 
 ??? example
     ```py
@@ -102,19 +111,24 @@ def raw_query_response_scalar(query_str) -> dict[str, QLModel | list[QLModel]]
     }""")
     ```
 
+---
 
 ## ql.query_response_scalar
 serializes the ql query structure to a valid graphql query, send it via http, takes the response
 and returns a scalared dict with the defined models, this function will also raise
 graphql errors if the query responsed with `errors` field
+
 ```py
 def query_response_scalar(
-    *query_models: _QueryModelType, fragments: Optional[_QueryFragmentType] = None
+    *query_models: _QueryModelType,
+    fragments: Optional[_QueryFragmentType] = None
 ) -> dict[str, BaseModel | list[BaseModel]]:
 ```
 
+---
+
 ## ql.scalar_query_response
-takes a graphql response `dict` and scalarize it based on the 
+takes a graphql response `dict` and scalarize it based on the
 `__typename` field
 
 ```py
@@ -123,13 +137,12 @@ def scalar_query_response(
 ) -> dict[str, QLModel | list[QLModel]]
 ```
 
-!!! warning ""
-    this functionality can only work if the query string
-    contains the `__typename` field
-
 | Name | Type | Description |
 |------|------|-------------|
 | query_response | `dict` | graphql query response |
+
+??? warning "requirement"
+    http request function must be set to make this function work, [click here to view](../http).
 
 ??? example
     ```py
@@ -150,6 +163,8 @@ def scalar_query_response(
     })
     assert isinstance(scalarized["point"], Point)
     ```
+
+---
 
 ## ql.QueryBuilder
 builder pattern to build graphql queries easily, allows all the functionality of [query_response](#qlquery_response), [scalar_query_response](#qlscalar_query_response) and [query](#qlquery)
@@ -233,15 +248,17 @@ def query(self) -> QueryResponseDict
 ```
 
 ### .scalar()
-converts the query to string, performs http request, and scalar the 
+converts the query to string, performs http request, and scalar the
 graphql request to python classes
 
 ```py
 def scalar(self) -> dict[str, QLModel | list[QLModel]]
 ```
 
+---
+
 ## ql.QueryModelBuilder
-class that passed to `QueryBuilder` to build query for 
+class that passed to `QueryBuilder` to build query for
 a specific model
 
 | Name | Type | Description |
@@ -259,8 +276,10 @@ def fields(self, *fields: QueryFieldTypes) -> Self
 |------|------|-------------|
 | *fields | `QueryFieldTypes` | list of fields to add |
 
+---
+
 ## ql.QueryFragmentBuilder
-class to build fragments 
+class to build fragments
 
 | Name | Type | Description |
 |------|------|-------------|

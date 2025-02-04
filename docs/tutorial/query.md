@@ -36,7 +36,7 @@ value at index `1` is iterable of fields.
 
 in code the query schema will look something like this
 
-???+ example "python query schema in code"
+!!! example "python query schema in code"
     ```py
     import ql
     from pydantic import BaseModel
@@ -83,7 +83,7 @@ since each tuple represent a "model" query in python,
 ### nested fields
 lets first look at an example of querying nested fields
 
-???+ example
+!!! example
     ```py
     query_str = ql.query(
         (Person, (
@@ -155,7 +155,7 @@ we can keep nesting like that as much as we want.
 building query with python objects is hard to read, raw queries are not type checkable,
 a perfect pattern that solves both issues of readability and type checking is the builder pattern.
 
-???+ example
+!!! example
     ```py
     import ql
 
@@ -202,7 +202,7 @@ a perfect pattern that solves both issues of readability and type checking is th
 the `QueryBuilder` has the `.model` method that accepts `QueryModelBuilder`, each
 call to the `.model` method attaches the model to the query
 
-???+ example
+!!! example
     ```py
     import ql
     from pydantic import BaseModel
@@ -212,4 +212,9 @@ call to the `.model` method attaches the model to the query
 
 ??? abstract "view full example"
 
-    testing
+    ```py
+    import ql
+    from pydantic import BaseModel
+
+
+    ```

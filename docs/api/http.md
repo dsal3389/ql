@@ -1,10 +1,11 @@
 # http
 this library does not implement http communication with graphql server since API can be
 different from implementation to implementation. the library http client accept a `request` function
-that takes a graphql query string, and returns the json response parsed as dict, this allows 
+that takes a graphql query string, and returns the json response parsed as dict, this allows
 the flexability to implement error handlers in the passed request function instead
 of wrapping each `query` request with `try...except`.
 
+---
 
 ##  ql.http.set_request_func
 set request function for the `ql` client
@@ -41,4 +42,4 @@ def request(self, query: str) -> QueryResponseDict:
 |------|------|-------------|
 | `query` | `str` | the query request that will be passed to the function |
 
-
+---

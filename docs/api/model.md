@@ -1,12 +1,16 @@
 # model
 
+---
+
 ## ql.all_models
-returns a dict mapping between all registered models and thier 
+returns a dict mapping between all registered models and thier
 registered typename
 
 ```py
 def all_models() -> dict[str, type[BaseModel]]:
 ```
+
+---
 
 ## ql.typename
 returns the model configured typename, if model is not registered
@@ -20,6 +24,7 @@ def typename(model: type[BaseModel]) -> Optional[str]:
 |------|------|-------------|
 | `model` | `type[BaseModel]` | the model we want the typename for |
 
+---
 
 ## ql.implements
 returns all child models, that the given model implements
@@ -32,37 +37,37 @@ def implements(cls: type[BaseModel]) -> tuple
 |------|------|-------------|
 | `cls` | `type[BaseModel]` | the model we want to take implementations from |
 
-```py
-import ql
-from pydantic import BaseModel
+??? example
+    ```py
+    import ql
+    from pydantic import BaseModel
 
 
-@lq.model
-class Human(BaseModel):
-    first_name: str
-    last_name: str
+    @lq.model
+    class Human(BaseModel):
+        first_name: str
+        last_name: str
 
 
-@ql.model
-class Male(Human):
-    pass
+    @ql.model
+    class Male(Human):
+        pass
 
 
-@ql.model
-class Female(Human):
-    pass
+    @ql.model
+    class Female(Human):
+        pass
 
 
-print(ql.implements(Human))
-# (<class '__main__.Male'>, <class '__main__.Female'>)
-```
+    print(ql.implements(Human))
+    # (<class '__main__.Male'>, <class '__main__.Female'>)
+    ```
+
+---
 
 ## ql.model_queryable_fields
 returns an enum of all queryable fields in the given model, mapping between
 the model field name to the query name.
-
-!!! info
-    this function is also aliased as `ql._` because it is common
 
 ```py
 def model_queryable_fields(cls: type[BaseModel]) -> Any
@@ -72,23 +77,26 @@ def model_queryable_fields(cls: type[BaseModel]) -> Any
 |------|------|-------------|
 | `cls` | `type[BaseModel]` | the model we want the namedtuple from |
 
-```py
-import ql
-from typing import Annotated
-from pydantic import BaseModel
+??? tip
+    this function is also aliased as `ql._` because it is common
+
+??? example
+    ```py
+    import ql
+    from typing import Annotated
+    from pydantic import BaseModel
 
 
-@ql.model
-class Article(BaseModel):
-    name: Annotated[str, ql.metadata(query_name="title")]
-    description: str
+    @ql.model
+    class Article(BaseModel):
+        name: Annotated[str, ql.metadata(query_name="title")]
+        description: str
 
-    foo: Annotated[str, ql.metadata(queryable=False)]
+        foo: Annotated[str, ql.metadata(queryable=False)]
 
-fields = ql.model_queryable_fields(Article)
+    fields = ql.model_queryable_fields(Article)
 
-print(fields.name)         # "title"
-print(fields.description)  # "description"
-print(fields.foo)          # exception
-
-```
+    print(fields.name)         # "title"
+    print(fields.description)  # "description"
+    print(fields.foo)          # exception
+    ```
