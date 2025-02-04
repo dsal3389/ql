@@ -1,5 +1,11 @@
 import ql
 from pydantic import BaseModel
+from typing import Annotated
+
+
+@ql.model
+class ModelWithFieldMetadata(BaseModel):
+    field: Annotated[str, ql.metadata(query_name="custom_field")]
 
 
 @ql.model

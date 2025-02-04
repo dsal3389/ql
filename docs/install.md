@@ -14,3 +14,8 @@
     ```console
     poetry add pydantic-graphql
     ```
+
+=== "uv"
+    ```console
+    uv add pydantic-graphql
+    ```

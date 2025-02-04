@@ -18,3 +18,23 @@ pip3 install pydantic-graphql
 ## documentation 
 [https://dsal3389.github.io/ql/](https://dsal3389.github.io/ql/)
 
+# local development
+
+## install
+install locally
+```sh
+git clone git@github.com:dsal3389/ql.git
+```
+
+## documentation
+make sure you are at the project root
+```sh
+poetry run mkdocs serve
+```
+
+## tests
+library uses pytest to validate that behavior is expected
+```sh
+poetry run pytest
+```
+

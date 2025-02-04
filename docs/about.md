@@ -5,12 +5,13 @@ hide: toc
 this library is wrapped around pydantic for easy modeling, typechecking and 
 because it is pydantic, it is well known package, no need to reinvent the wheel here.
 
-## this library **is not**
+## this library **_is not_**
   * an **http** client library, this library does not implement http communication with graphql endpoints.
-  * a graphql server, this library is to create graphql client code.
+  * a graphql server
 
 ## this library **is**
   * a light, fast and easy library to work with graphql apis.
+  * built on top of pydanticV2 for type-safty and serialization
 
 # why use `ql` over other libraries
 

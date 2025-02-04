@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import enum
 from inspect import isclass
 from itertools import chain
-from collections.abc import Iterable
 from typing import TypeAlias, Any
-from collections.abc import Generator
+from typing_extensions import Self
+from collections.abc import Generator, Iterable
 from pydantic import BaseModel
 
 from ._http import http
@@ -61,13 +63,13 @@ class _QueryOperation:
 
 
 QueryKeyTypes: TypeAlias = type[QLModel] | _QueryOperation | str | enum.Enum
-QueryFieldTypes: TypeAlias = "str | enum.Enum | QueryRequestSchema"
+QueryFieldTypes: TypeAlias = "str | enum.Enum | QueryRequestSchema | _QueryOperation"
 
 QueryRequestSchema: TypeAlias = tuple[
     QueryKeyTypes,
     Iterable[QueryFieldTypes],
 ]
-QueryFragmentSchema: TypeAlias = dict[
+QueryFragmentSchema: TypeAlias = tuple[
     tuple[str, QLModel], Iterable["QueryFieldTypes | QueryRequestSchema"]
 ]
 
@@ -77,8 +79,8 @@ class _QuerySerializer:
 
     def __init__(
         self,
-        query_models: tuple[QueryRequestSchema, ...],
-        fragments: QueryFragmentSchema,
+        query_models: Iterable[QueryRequestSchema],
+        fragments: Iterable[QueryFragmentSchema] | None,
         include_typename: bool,
     ) -> None:
         self._query = query_models
@@ -93,20 +95,26 @@ class _QuerySerializer:
         for model_query in self._query:
             yield from self._serialize_model_query(model_query)
 
-        for fragment_data, fragment_query in self._fragments.items():
-            name, model = fragment_data
-            if (typename_ := typename(model)) is None:
-                raise ValueError(
-                    f"couldn't get model typename for fragment `{name}`, are you sure `{model.__name__}` is a ql model?"
-                )
+        if self._fragments:
+            for fragment_data, fragment_query in self._fragments:
+                name, model = fragment_data
+                if (typename_ := typename(model)) is None:
+                    raise ValueError(
+                        f"couldn't get model typename for fragment `{name}`, are you sure `{model.__name__}` is a ql model?"
+                    )
 
-            yield f"fragment {name} on {typename_}"
-            yield from self._serialize_model_fields(fragment_query)
+                yield f"fragment {name} on {typename_}"
+                yield from self._serialize_model_fields(fragment_query)
         yield "}"
 
     def _serialize_model_query(
         self, model_query: QueryRequestSchema
     ) -> Generator[str, None, None]:
+        """
+        takes a model query which constructed of a tuple with 2 value,
+        the model class and the query fields, the model can be wrapped in graphql
+        operation like `fragment` or `on`
+        """
         model_or_op, fields = model_query
 
         # if fields is a list or something that is not
@@ -127,6 +135,7 @@ class _QuerySerializer:
     def _serialize_model_fields(
         self, fields: Iterable[QueryFieldTypes]
     ) -> Generator[str, None, None]:
+        """serialize query model fields"""
         first = True
 
         for field in fields:
@@ -154,6 +163,10 @@ class _QuerySerializer:
     def _serialize_model_or_operation(
         self, model_or_operation: QueryKeyTypes
     ) -> Generator[str, None, None]:
+        """
+        takes the model from the query tuple, the model can be wrapped in
+        some graphql operation
+        """
         if isclass(model_or_operation):
             if issubclass(model_or_operation, BaseModel):
                 query_name = getattr(model_or_operation, QL_QUERY_NAME_ATTR, None)
@@ -219,11 +232,11 @@ class _QueryResponseScalar:
 
         for model_key_name, values in dict_.items():
             if isinstance(values, dict):
-                scalared[model_key_name] = self._scalar_dict(values)
+                scalared[model_key_name] = self._scalar_dict(values)  # type: ignore
             elif isinstance(values, list):
                 scalared[model_key_name] = []
                 for value in values:
-                    scalared[model_key_name].append(self._scalar_dict(value))
+                    scalared[model_key_name].append(self._scalar_dict(value))  # type: ignore
             else:
                 scalared[model_key_name] = values
         return scalared
@@ -248,7 +261,7 @@ class _QueryResponseScalar:
                 f"couldn't scalar query response, couldn't find required module, typename `{typename}` in requested query"
             )
 
-        scalared_fields = {}
+        scalared_fields: dict[str, Any] = {}
 
         for key, value in dict_.items():
             if isinstance(value, dict):
@@ -288,6 +301,76 @@ class _QueryResponseScalar:
                 field_name = query_name_to_model_name[field_name]
             model_init_kwargs[field_name] = value
         return model(**model_init_kwargs)
+
+
+class QueryModelBuilder:
+    def __init__(self, model: str | enum.Enum | type[QLModel]) -> None:
+        self._model = model
+        self._fields: list[QueryFieldTypes] = []
+
+    def fields(self, *fields: QueryFieldTypes | QueryModelBuilder) -> Self:
+        for field in fields:
+            if isinstance(field, QueryModelBuilder):
+                self._fields.append(field.build())
+            else:
+                self._fields.append(field)
+        return self
+
+    def build(self) -> QueryRequestSchema:
+        assert (
+            self._fields is not None
+        ), "cannot build model query, no fields were added"
+        return (self._model, self._fields)
+
+
+class QueryFragmentBuilder(QueryModelBuilder):
+    def __init__(self, name: str, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._name = name
+
+    def build(self) -> QueryFragmentSchema:  # type: ignore
+        assert (
+            self._fields is not None
+        ), "cannot build fragment query, no fields were added"
+        return (fragment(self._name, self._model), self._fields)  # type: ignore
+
+
+class QueryBuilder:
+    def __init__(self, *, include_typename: bool = True) -> None:
+        self._include_typename = include_typename
+        self._query_models: list[QueryRequestSchema] = []
+        self._fragments: list[QueryFragmentSchema] = []
+
+    def model(self, model_builder: QueryModelBuilder) -> Self:
+        self._query_models.append(model_builder.build())
+        return self
+
+    def fragment(self, fragment_builder: QueryFragmentBuilder) -> Self:
+        self._fragments.append(fragment_builder.build())
+        return self
+
+    def build(self) -> str:
+        """returns the built query as valid graphql string"""
+        return _QuerySerializer(
+            query_models=self._query_models,
+            fragments=self._fragments,
+            include_typename=self._include_typename,
+        ).serialize()
+
+    def query(self) -> QueryResponseDict:
+        """perform a query request and returns the response"""
+        return query_response(
+            *self._query_models,
+            fragments=self._fragments,
+            include_typename=self._include_typename,
+        )
+
+    def scalar(self) -> dict[str, QLModel | list[QLModel]]:
+        """performs a query request and scalar the response"""
+        return query_response_scalar(
+            *self._query_models,
+            fragments=self._fragments,
+        )
 
 
 def arguments(model: type[QLModel], /, **kwargs) -> _QueryOperation:
@@ -336,20 +419,20 @@ def scalar_query_response(
 
 def query(
     *query_models: QueryRequestSchema,
-    fragments: QueryFragmentSchema | None = None,
+    fragments: Iterable[QueryFragmentSchema] | None = None,
     include_typename: bool = True,
 ) -> str:
     """
     returns string version of requester query
     """
     return _QuerySerializer(
-        query_models, fragments=fragments or {}, include_typename=include_typename
+        query_models, fragments=fragments, include_typename=include_typename
     ).serialize()
 
 
 def query_response(
     *query_models: QueryRequestSchema,
-    fragments: QueryFragmentSchema | None = None,
+    fragments: Iterable[QueryFragmentSchema] | None = None,
     include_typename: bool = True,
 ) -> QueryResponseDict:
     """
@@ -367,13 +450,14 @@ def query_response(
     {"data": "point": {"x": 50, "y": -50}}
     """
     query_string = _QuerySerializer(
-        query_models, fragments=fragments or {}, include_typename=include_typename
+        query_models, fragments=fragments, include_typename=include_typename
     ).serialize()
     return http.request(query_string)
 
 
 def query_response_scalar(
-    *query_models: QueryRequestSchema, fragments: QueryFragmentSchema | None = None
+    *query_models: QueryRequestSchema,
+    fragments: Iterable[QueryFragmentSchema] | None = None,
 ) -> dict[str, QLModel | list[QLModel]]:
     response = query_response(*query_models, fragments=fragments, include_typename=True)
     return scalar_query_response(response)

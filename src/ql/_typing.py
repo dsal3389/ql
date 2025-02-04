@@ -43,9 +43,9 @@ class QLFieldMetadata:
 
 
 def metadata(
-    *,
-    mutate_name: str | None = None,
     query_name: str | None = None,
+    mutate_name: str | None = None,
+    *,
     queryable: bool = True,
     mutable: bool = True,
 ) -> QLFieldMetadata:
