@@ -5,7 +5,7 @@
 ## raw query
 raw query is when we use place the graphql query in python string
 
-!!! example ""
+!!! quote
     ```py
     graphql_response = ql.raw_query_response("""
       query {
@@ -41,7 +41,7 @@ raw query is when we use place the graphql query in python string
 
 ### scalar
 
-!!! example ""
+!!! quote
     ```py
     query_response = ql.raw_query_response_scalar("""
       query {
@@ -93,7 +93,7 @@ object to create dynamic queries
 
 ### scalar
 
-!!! example ""
+!!! quote
     ```py
     query = ql.QueryBuilder()
       .model(
@@ -132,7 +132,7 @@ object to create dynamic queries
 
 ## python tuples
 
-!!! example ""
+!!! quote
     ```py
     query_str2 = ql.query(
       (Human, (

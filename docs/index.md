@@ -38,3 +38,6 @@ and functions attached to you pydantic model, and doesn't change the model behav
 
 1. makes the pydantic model compatible to use with the library
 2. function that takes a raw query string, send it via http, and scalarize the response base on the `__typename`
+
+## examples
+take a quick look at the [query examples sections](./examples/query.md)

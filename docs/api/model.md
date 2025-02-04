@@ -77,7 +77,7 @@ def model_queryable_fields(cls: type[BaseModel]) -> Any
 |------|------|-------------|
 | `cls` | `type[BaseModel]` | the model we want the namedtuple from |
 
-??? tip
+???+ tip
     this function is also aliased as `ql._` because it is common
 
 ??? example

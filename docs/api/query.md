@@ -52,7 +52,7 @@ def query_response(
 ) -> QueryResponseDict:
 ```
 ??? warning "prerequisite"
-    http request function must be set to make this function work, [click here to view](../http).
+    http request function must be set to make this function work, [click here to view](../http.md).
 
 ---
 
@@ -141,8 +141,8 @@ def scalar_query_response(
 |------|------|-------------|
 | query_response | `dict` | graphql query response |
 
-??? warning "requirement"
-    http request function must be set to make this function work, [click here to view](../http).
+??? warning "prerequisite"
+    http request function must be set to make this function work, [click here to view](../http.md).
 
 ??? example
     ```py
